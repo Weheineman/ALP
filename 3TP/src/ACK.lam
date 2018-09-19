@@ -1,0 +1,30 @@
+--eq no me tipa, necesito el operador D?
+--def eq = \m:Nat. R (\x:Nat. iszero x) (\f:Nat -> (B -> B -> B) -> (B -> B -> B) -> B -> B -> B. \m:Nat. (\n:Nat. (iszero n) (\x:B.-\y:B.y) (f (pred n)) )) m
+
+def pred = \m:Nat. R 0 (\f:Nat.\n:Nat. n ) m
+
+def iszero = \m:Nat. R (suc 0) (\x:Nat.\y:Nat.0) m
+
+def suma = \m:Nat. R (\x:Nat.x) (\f:Nat->Nat. \m:Nat. (\n:Nat. suc (f n))) m
+
+def mult = \m:Nat. R (\x:Nat.0) (\f:Nat-> Nat. \m:Nat. (\n:Nat. suma n (f n) )) m
+
+def rest = \m:Nat. \n:Nat. R m (\f:Nat. \n:Nat. pred f) n
+
+def and = \x:Nat .\y:Nat. mult x y
+
+def eq = \m:Nat. \n:Nat. and (iszero(rest m n)) (iszero(rest n m))
+
+def  Iter = \f:Nat -> Nat . \n:Nat. R (f (suc 0)) (\g:Nat.\x:Nat. f g) n
+
+def ack = \m:Nat. (R (\n:Nat. suc n) (\g:Nat->Nat.\x:Nat. \n:Nat. Iter g n ) m) 
+
+def rep = \f:Nat-> Nat .\n:Nat. (R (\x:Nat.x) (\g:Nat->Nat. \m:Nat. (\n:Nat. f (g n)) ) n)
+
+def acke = \m:Nat. R (\n:Nat. suc n) (\f:Nat-> Nat .\y:Nat. (\x:Nat. (rep f (suc suc x)) x) ) m
+
+def multi = \m:Nat . \n:Nat. R 0 (\x:Nat. \y:Nat. suma x m) n
+
+def sum = \m:Nat . \n:Nat . R m (\x:Nat. \y:Nat. suc x) n
+
+def fact = \m:Nat . R (suc 0) (\x:Nat. \y:Nat. multi (suc y) x) m

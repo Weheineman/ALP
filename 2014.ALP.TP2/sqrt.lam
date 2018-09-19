@@ -1,0 +1,14 @@
+-- resta
+def resta =\n m s z . m pred n s z
+
+-- menor igual
+def mi = \ n m. (is0 (resta n m)) 
+
+-- cua
+def cua = \ n. mult n n
+
+--sqrt
+def sqrt = \ n. Y (\f .\n m. (mi (cua m) n ) (f n (suc m)) (pred m)) n zero
+
+--raiz
+def raiz = 0

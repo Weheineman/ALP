@@ -1,0 +1,765 @@
+\documentclass{article}
+
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{etoolbox}
+\usepackage[most]{tcolorbox}
+\usepackage[hidelinks]{hyperref}
+\usepackage[nottoc,numbib]{tocbibind}
+\hyphenchar\font=-1
+
+\hypersetup{
+	allcolors=black
+}
+
+\renewcommand{\contentsname}{\'Indice}
+\renewcommand\refname{Referencias}
+
+% set the default code style
+\lstset{
+    language = Haskell,
+    frame=tblr, % draw a frame at the top and bottom of the code block
+    rulecolor=\color{black},
+    tabsize=4, % tab space width
+    breakatwhitespace=true,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=false,
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,
+    basicstyle=\small\ttfamily\bfseries,
+    commentstyle=\color{red}, % comment color
+    keywordstyle=\color{blue}, % keyword color
+    stringstyle=\color{orange} % string color
+}
+\title{Trabajo Pr\'actico 1}
+\date{28-09-2018}
+\author{
+	Weinand, Gianni Georg\\
+	\texttt{W-0528/2}
+	\and
+	Capretto, Margarita
+	\texttt{TODO}
+}
+
+
+\newtcblisting{commandshell}{colback=black,colupper=white,colframe=black,
+listing only,listing options={language=sh,  keywordstyle=\color{white}, basicstyle=\small\ttfamily\bfseries, breaklines=true, keepspaces=true, breakatwhitespace=false,  captionpos=b, showstringspaces=false, showtabs=false },
+every listing line={\textcolor{pink}{\small\ttfamily\bfseries Monika \$> }}}
+
+\begin{document}
+
+\begin{titlepage}
+	\centering
+	\includegraphics[width=0.4\textwidth]{unrlogo}\par\vspace{1cm}
+	{\scshape\LARGE R-313 An\'alisis de Lenguajes de Programaci\'on \par}
+	\vspace{1cm}
+	{\scshape\Large Trabajo Pr\'actico 1\par}
+	\vspace{1.5cm}
+	\vspace{2cm}
+	{\Large\itshape Gianni Georg Weinand W-0528/2 \\ Margarita Capretto TODO\par}
+
+	\vfill
+
+% Bottom of the page
+	{\large 28 de Septiembre, 2018 \par}
+\end{titlepage}
+
+\tableofcontents
+
+\newpage
+
+\section{Primera implementaci\'on: Espacio de usuario}
+
+\paragraph{}
+Para este caso en particular, la entrada y salida del c\'odigo no poseen restricciones, por lo que se opt\'o por los medios est\'andar por consola. Por lo tanto, las funciones de ingreso e impresi\'on son las siguientes:
+
+\begin{lstlisting}
+void ingresarCelda(){
+	int x, y;
+	while(1){
+		printf("Ingrese la coordenada horizontal: ");
+		scanf("%d", &x);
+		if(x >= 1 && x <= W){
+			printf("Ingrese la coordenada vertical: ");
+			scanf("%d", &y);
+			if(y >= 1 && y <= H){
+				T[0][y][x] = (T[0][y][x] ^ 1) & 1;
+				break;
+			}
+				
+			else
+				printf("\nERROR. Ingrese un valor valido entre 1 y el alto.\n\n");
+				
+			}
+		
+		else
+			printf("\nERROR. Ingrese un valor valido entre 1 y el ancho.\n\n");
+		
+	}
+}
+
+
+
+void ingresarTablero(){
+	char opcion;
+	while(1){
+		printf("¿Desea encender o apagar otra celda? (S/N) : ");
+		scanf("%c", &opcion);
+		opcion = toupper(opcion);
+		if (opcion == 'S'){
+			ingresarCelda();
+			getchar();
+			printf("Estado actual del tablero:\n"); 
+			printTablero(0);			
+		}
+		else if (opcion == 'N')	
+			break;
+		else 
+			printf("\nERROR. Ingrese una opcion valida.\n");
+		
+	}
+	
+	printf("Empezando simulacion. Presione una tecla para continuar.\n");
+	getchar();
+	getchar();
+}
+\end{lstlisting}
+
+\paragraph{}
+ingresarTablero le da al usuario la opci\'on de modificar una cantidad indeterminada de celdas, alternando entre encenderlas y apagarlas. En caso de que quiera cambiar el estado de una, se llama a ingresarCelda, que se encarga de ello. El resto de las l\'ineas hacen controles de la entrada e imprimen mensajes relacionados.
+
+\begin{lstlisting}
+void clearTablero(){
+	int i;
+	for(i = 0; i < 10; ++i)
+		putchar('\n');
+}
+
+void printTablero(int act){
+	clearTablero();
+	
+	int i, j;
+	for(i = 1; i < H+1; ++i){
+		for(j = 1; j < W+1; ++j){
+			if(T[act][i][j])
+				putchar('*');
+			else
+				putchar(' ');
+			}
+		
+		putchar('\n');
+	}	
+}
+\end{lstlisting}
+		
+\paragraph{}
+printTablero imprime en pantalla una representaci\'on del tablero. Cada c\'elula imprimir\'a un asterisco si est\'a viva, y un espacio en caso contrario. Adem\'as, entre impresiones consecutivas del tablero, se llama a la funci\'on clear para que agregue l\'ineas en blanco entre una y la otra. 
+
+\subsection{Cross-Compiling}
+
+\paragraph{}
+A lo largo del cursado se vieron dos arquitecturas de procesador diferentes: x86-64 y ARM. Las computadoras que se utilizan normalmente (en particular las utilizadas en la resoluci\'on de este trabajo) cuentan con procesadores x86-64. Consecuentemente, al compilar c\'odigo fuente C utilizando el comando gcc se produce un ejecutable para la arquitectura nativa de la m\'aquina. Es entonces necesario instalar un compilador que genere ejecutables para ARM. Un compilador capaz de generar c\'odigo ejecutable para una plataforma diferente de la que ejecuta el compilador se llama cross-compiler. 
+
+\paragraph{}
+En el transcurso de este trabajo se utiliz\'o el toolchain arm-none-eabi, que se puede instalar desde Ubuntu con el comando:
+
+\begin{commandshell}
+apt-get install gcc-arm-none-eabi
+\end{commandshell}
+
+\paragraph{}
+Adem\'as, para la compilaci\'on en espacio de usuario (que requiere libc) se utiliz\'o arm-linux-gnueabi, instalado con los comandos:\cite{GNUEabi}
+
+\begin{commandshell}
+sudo apt-get install libc6-armel-cross libc6-dev-armel-cross
+sudo apt-get install binutils-arm-linux-gnueabi
+sudo apt-get install libncurses5-dev
+sudo apt-get install gcc-arm-linux-gnueabi
+\end{commandshell}
+
+\subsection{Makefile}
+
+\paragraph{}
+En cada carpeta del trabajo se encuentra un archivo makefile, que contiene los comandos de compilaci\'on para cada proyecto.\cite{Makefile} Basta con ejecutar el comando
+
+\begin{commandshell}
+make
+\end{commandshell}
+
+desde un shell para compilar todos los archivos del proyecto. Adem\'as al ejecutar
+
+\begin{commandshell}
+make clean
+\end{commandshell}
+
+se eliminan todos los archivos generados en el comando anterior (este comportamiento est\'a especificado en cada makefile).
+
+\paragraph{}
+En particular el makefile del programa anterior es:
+
+\begin{lstlisting}
+all: gameoflife
+
+clean :
+	rm -f *.o
+	rm -f *.bin
+	rm -f *.hex
+	rm -f *.elf
+	rm -f *.list
+	rm -f *.img
+
+
+gameoflife: gameoflife.c
+	arm-linux-gnueabi-gcc gameoflife.c -o gameoflife
+\end{lstlisting}
+
+\paragraph{}
+Una alternativa al cross-compiler en esta etapa del trabajo es compilar con
+
+\begin{commandshell}
+gcc gameoflife.c -o gameoflife
+\end{commandshell}
+
+desde el Raspberry Pi Zero con Raspbian. Al compilar el c\'odigo en la misma plataforma donde se ejecutar\'a basta con usar gcc de forma usual.
+
+\section{Segunda implementaci\'on: Emulaci\'on de Bare Metal}
+
+\subsection{Bare Metal}
+
+\paragraph{}
+En la siguiente parte del trabajo, el c\'odigo ha de ser ejecutado en una computadora que no est\'e ejecutando su sistema operativo. A este tipo de programaci\'on se lo conoce como bare metal.\cite{WikiBareMetal} Para lograr ejecutar el c\'odigo es necesario modificar algunos aspectos del encendido del procesador.
+
+\paragraph{}
+La arquitectura ARM comienza a ejecutar c\'odigo en una direcci\'on determinada, la cual depende del dispositivo que se est\'e utilizando, y puede estar almacenada en RAM o en ROM. En dicha direcci\'on, se debe poner la tabla de vectores de interrupci\'on. As\'i, se puede modificar el comportamiento que se realice cuando llegue una interrupci\'on, como cuando el n\'ucleo ARM se reinicie. Entonces, puede decirse que el handler de ese evento sea el c\'odigo que se desea ejecutar, haciendo que se salte a la funci\'on main del Juego.\cite{BalauBareMetal1}
+
+\paragraph{}
+Estos cambios se escriben en el archivo startup.s, que contiene lo siguiente:\cite{RedHatLinker1}\cite{RedHatLinker2}
+
+\begin{lstlisting}
+.global _Reset
+_Reset:
+    LDR sp, =stack_top
+    BL c_entry
+    B .
+\end{lstlisting}
+
+\paragraph{}
+Primero inicializa el valor del tope de la pila, la cual ser\'a necesaria cuando se llame a funciones en el c\'odigo C. El valor de stack\_top se definir\'a en el momento de enlace. 
+
+\paragraph{}
+Luego, le hace una llamada a la funci\'on c\_entry. Este ser\'a el nuevo nombre que se le dar\'a a la funci\'on main del c\'odigo ya escrito. La raz\'on por la que se cambia el nombre es porque los compiladores pueden insertar c\'odigos binarios adicionales al encontrar una funci\'on main, los cuales pueden causar problemas en el entorno bare metal.\cite{DwelchReadme}
+
+\paragraph{}
+El otro archivo que se debe escribir es el linker script, startup.ld , el que se encargar\'a de enlazar el c\'odigo assembler ya escrito con el que queremos ejecutar:
+
+\begin{lstlisting}
+ENTRY(_Reset)
+SECTIONS
+{
+ . = 0x10000;
+ .startup . : { startup.o(.text) }
+ .text : { *(.text) }
+ .data : { *(.data) }
+ .bss : { *(.bss COMMON) }
+ . = ALIGN(8);
+ . = . + 0x1000; /* 4kB of stack memory */
+ stack_top = .;
+}
+\end{lstlisting}
+
+\paragraph{}
+El comando ENTRY define cu\'al es el punto de entrada del programa, es decir, la primera l\'inea que se ejecutar\'a. De esta forma, decimos que \_Reset inicie el c\'odigo. Luego, se define c\'omo ser\'an las secciones del programa.
+
+\paragraph{}
+Se procede a definir el valor del s\'imbolo especial . , que es el contador de locaci\'on (location counter). En este caso se le da la direcci\'on 0x10000, que es la direcci\'on sobre a la que QEMU ir\'a a buscar la imagen del kernel para iniciar la emulaci\'on, y es donde necesitamos que se posicione el c\'odigo que queremos ejecutar.\cite{BalauBareMetal3} Se definen consecutivamente la secci\'on de texto de startup.o , y luego las de texto, data y valores no inicializados. Por \'ultimo, se alinea el valor del contador, se le aumenta en 4kB y se da el tope de la pila ah\'i, efectivamente d\'andole ese tama\~no a la pila.
+
+\paragraph{}
+Una vez guardados estos archivos, falta modificar el c\'odigo fuente del Juego, que ya puede ser compilado.
+
+\subsection{QEMU}
+
+\paragraph{}
+Para ejecutar un programa compilado para ARM en una computadora con arquitectura x86-64, es necesario un emulador. En este trabajo se utiliz\'o QEMU con la opci\'on VersatilePB (que tiene un procesador ARM926EJ-S)\cite{WikiQEMU}\cite{BalauBareMetal2}. Se puede instalar en Ubuntu con el comando:
+
+\begin{commandshell}
+apt-get install qemu
+\end{commandshell}
+
+\subsection{UART}
+
+\paragraph{}
+UART significa Universal Asynchronous Reciever-Transmitter\cite{WikiUART}. Es un dispositivo de hardware que permite comunicaci\'on as\'incrona serial. En QEMU, el primer puerto UART, llamado UART0 funciona como terminal si se ejecuta con la opci\'on -nographic.\cite{BalauBareMetal3} Los puertos est\'an mapeados a direcciones de memoria. En particular, a UART0 le corresponde la direcci\'on 0x101f100 en el VersatilePB. Esto se ve reflejado en la l\'inea:
+
+\begin{lstlisting}
+pl011_T * const UART0 = (pl011_T *)0x101f1000;
+\end{lstlisting}
+
+\paragraph{}
+En C se implement\'o mediante la siguiente estructura (el manual explicita los campos y la memoria que le corresponde a cada uno):\cite{UARTManual}
+
+\begin{lstlisting}
+typedef volatile struct {
+ uint32_t DR;
+ uint32_t RSR_ECR;
+ uint8_t reserved1[0x10];
+ const uint32_t FR;
+ uint8_t reserved2[0x4];
+ uint32_t LPR;
+ uint32_t IBRD;
+ uint32_t FBRD;
+ uint32_t LCR_H;
+ uint32_t CR;
+ uint32_t IFLS;
+ uint32_t IMSC;
+ const uint32_t RIS;
+ const uint32_t MIS;
+ uint32_t ICR;
+ uint32_t DMACR;
+} pl011_T;
+\end{lstlisting}
+
+\paragraph{}
+En particular se utiliz\'o UARTDR (o DR en la estructura), que es el registro designado para enviar y recibir bytes. Aparece en consecuencia la funci\'on uart\_puts, que env\'ia una cadena de caracteres s a trav\'es del puerto que recibe como argumento. La funci\'on recorre el string y env\'ia cada caracter a trav\'es de UARTDR (con un casting previo para satisfacer el tama\~no del registro DR):
+
+
+\begin{lstlisting}
+static void uart_puts(pl011_T *uart, char *s){
+	while(*s != '\0') {
+		uart->DR = (unsigned int)(*s);
+		s++;
+	}
+}
+\end{lstlisting}
+
+\paragraph{}
+El programa recibe entrada de varios tipos: cadenas de caracteres, n\'umeros, caracteres individuales. Se implement\'o una funci\'on uart\_gets que lee una cadena de caracteres de la entrada serial que recibe como argumento. Para leer desde UART se us\'o el Flag Register (FR en la estructura). Para acceder a un flag espec\'ifico basta con hacer el and l\'ogico entre FR y el bit correspondiente al flag deseado. Son de inter\'es RXFE (encendido cuando el recieve FIFO est\'a vac\'io) y TXFF (encendido cuando el transmit FIFO est\'a lleno). Esto se ve reflejado en las l\'ineas:
+
+\begin{lstlisting}
+enum {
+ RXFE = 0x10,
+ TXFF = 0x20,
+};
+
+\end{lstlisting}
+
+\paragraph{}
+Utilizando esto, la funci\'on gets lee caracteres hasta recibir un retorno de carro. Soporta el borrado de caracteres con Backspace y Delete, pero no lo muestra en tiempo real en la terminal.
+
+\begin{lstlisting}
+static void uart_gets(pl011_T *uart, char *s){
+	char* posicionActual = s;
+	int lineend = 0;
+	char c;
+	while(!lineend){
+		//Entra al if cuando el recieve FIFO no esta vacio
+		if ((uart->FR & RXFE) == 0) {
+			//Se queda esperando mientras el transmit FIFO este lleno
+			while(uart->FR & TXFF)
+				;
+			c  = uart->DR;
+			switch(c){
+				//Carriage return
+				case(13):
+					lineend = 1;
+					break;
+				//Backspace
+				case(8):
+					if(posicionActual > s)
+						--posicionActual;
+					break;
+				//Delete
+				case(127):
+					if(posicionActual > s)
+						--posicionActual;
+					break;
+				default:
+					*posicionActual = uart->DR = c;
+					++posicionActual;
+			}
+		}
+	}
+	
+	*posicionActual = 0;
+}
+\end{lstlisting}
+
+\paragraph{}
+Las funciones ingresarTablero y printTablero mantienen el mismo c\'odigo, salvo que tuvieron que reemplazarse las distintas llamadas de ingreso e impresi\'on por funciones propias que utilizen UART.
+
+\paragraph{}
+Las dos funciones restantes ingresan un string llamando a uart\_gets, s\'olo que modifican el resultado de manera que se ajuste al tipo de dato que requiere ingresarse. uart\_getint realiza una conversi\'on de una cadena de caracteres que contiene un n\'umero al int correspondiente. Por otro lado, uart\_getc toma el primer caracter de una cadena, y es utilizado cuando se busca ingresar un \'unico valor char o para esperar que se ingrese una tecla para continuar la ejecuci\'on del programa.
+
+\begin{lstlisting}
+static void uart_getint(pl011_T *uart, int* n){
+	char s[9];
+	uart_gets(UART0, s);
+	*n = 0;
+	int i;
+	for(i = 0;;++i){
+		if(s[i] == 0)
+			break;
+		(*n) *= 10;
+		(*n) += s[i]-'0';
+	}
+}
+
+
+static void uart_getc(pl011_T *uart, char *c){
+	char s[20];
+	uart_gets(uart, s);
+	*c = s[0];
+}
+\end{lstlisting}
+
+\subsection{Compilaci\'on y Ejecuci\'on}
+
+\paragraph{}
+Primero se compila el c\'odigo fuente en C:
+
+\begin{commandshell}
+arm-none-eabi-gcc -c -mcpu=arm926ej-s test.c   -o test.o
+\end{commandshell}
+
+\paragraph{}
+La opci\'on mcpu sirve para optimizar el ejecutable para un procesador espec\'ifico (se puede hacer esto pues se eligi\'o el ARM926EJ-S) y la -c genera c\'odigo objeto (pues hay un linkeo posterior). Con las mismas opciones se compila el c\'odigo en assembly:
+
+\begin{commandshell}
+arm-none-eabi-as -mcpu=arm926ej-s startup.s   -o startup.o
+\end{commandshell}
+
+\paragraph{}
+Luego se linkean los archivos compilados de la forma especificada en test.ld:
+
+\begin{commandshell}
+arm-none-eabi-ld -T test.ld test.o startup.o   -o test.elf
+\end{commandshell}
+
+\paragraph{}
+Y se convierte el programa .elf a un .bin, para poder ejecutarlo en QEMU:
+
+\begin{commandshell}
+arm-none-eabi-objcopy -O binary test.elf    test.bin
+\end{commandshell}
+
+\paragraph{}
+Todas estas l\'ineas forman parte del makefile.
+
+\paragraph{}
+Se procede a ejecutar el archivo test.bin con QEMU:
+
+\begin{commandshell}
+qemu-system-arm -M versatilepb -m 128M         -nographic -kernel test.bin
+\end{commandshell}
+
+\paragraph{}
+La opci\'on -M sirve para especificar el sistema a emular (en este caso VersatilePB), -m 128M para tener 128 megabytes de RAM, -nographic para no tener una ventana que simule el display y que UART0 funcione como terminal.
+
+
+\section{Tercera implementaci\'on: Bare Metal en Raspberry Pi}
+
+\subsection{Booteo}
+
+\paragraph{}
+Cuando el Raspberry Pi se enciende, el n\'ucleo del procesador est\'a apagado, y el GPU comienza a ejecutar un c\'odigo de inicio almacenado en la ROM. Se lee la tarjeta SD buscando un archivo bootcode.bin, el cual se almacena en una cach\'e y es ejecutado. Luego se habilita la SDRAM, se carga all\'i el archivo loader.bin, y se ejecuta. Este se encarga de leer el firmware de la GPU en otro archivo, start.elf, y reci\'en en ese momento se busca el kernel.
+
+\paragraph{}
+Ya que la imagen del kernel determina el c\'odigo que se ejecuta, se necesita tener all\'i el programa bare metal. Sin embargo, como se explic\'o previamente, tambi\'en son necesarios ciertos otros archivos. Este problema se resolvi\'o de una manera sencilla: se tom\'o una instalaci\'on de Raspbian en la tarjeta, la cual ya posee todos los archivos necesarios para inicializar el Raspberry, y se sobreescribi\'o el archivo de kernel con el c\'odigo del Juego de la Vida. 
+
+\paragraph{}
+De manera similar al programa de la segunda implementaci\'on, se crearon los archivos memmap y vectors.s que se encargan de configurar el inicio de la ejecuci\'on del programa, inicializando la pila, definiendo la cantidad de RAM necesaria y llamando a la funci\'on principal del Juego, llamada notmain.
+
+\paragraph{}
+memmap
+\begin{lstlisting}
+MEMORY
+{
+    ram : ORIGIN = 0x8000, LENGTH = 0x1000000
+}
+
+SECTIONS
+{
+    .text : { *(.text*) } > ram
+    .bss : { *(.bss*) } > ram
+}
+\end{lstlisting}
+
+\paragraph{}
+vectors.s
+
+\begin{lstlisting}
+.globl _start
+_start:
+    mov sp,#0x8000
+    bl notmain
+hang: b hang
+\end{lstlisting}
+
+
+\subsection{Framebuffer}
+
+\paragraph{}
+Al estar trabajando sobre un Raspberry Pi f\'isico, ya no se tiene acceso a alguna de las interfaces que la emulaci\'on facilitaba. Es decir, ya no se posee una terminal UART f\'acilmente accesible, ni se reconocen los perif\'ericos USB de manera autom\'atica. Por estas razones, se debi\'o buscar una alternativa para mostrar la salida del programa por pantalla.
+
+\paragraph{}
+Se opt\'o por utilizar el framebuffer, el cual es un buffer de memoria en RAM que proporciona un mapa de bits que controla una salida de video. Dicho mapa se convierte en una se\~nal que puede ser transmitida por un puerto HDMI para mostrarse en un monitor.
+
+\paragraph{}
+La unidad multimedia a la que se le transmitir\'a la informaci\'on para mostrar se conoce como VideoCore. La comunicaci\'on entre \'el y el procesador se realiza a trav\'es de un sistema de mailbox, dos canales entre los cuales se transmite informaci\'on entre ambos. La utilizaci\'on del mismo es bastante similar a UART, escribiendo en una direcci\'on para transmitir y leyendo de otra para recibir. 
+
+\paragraph{}
+Como punto inicial del c\'odigo, definimos un conjunto de estructuras y constantes que resultar\'an \'utiles m\'as tarde.
+
+\begin{lstlisting}
+static volatile uint32_t * const MB0_READ   = (uint32_t *) 0x2000B880;
+static volatile uint32_t * const MB0_WRITE  = (uint32_t *) 0x2000B8A0;
+static volatile uint32_t * const MB0_STATUS = (uint32_t *) 0x2000B898;
+
+static const uint32_t MAIL_FULL   = 0x80000000;
+static const uint32_t MAIL_EMPTY  = 0x40000000;
+
+static const uint32_t BUFF_ADDR_MASK = 0x40000000; 
+
+static const uint32_t CHANNEL_MASK = 0xF;
+
+typedef enum {
+  POWER_MANAGEMENT,
+  FRAMEBUFFER,
+  UART,
+  VCHIQ,
+  LED,
+  BUTTON,
+  TOUCH,
+  __reserved__,
+  ARM_TO_VC,
+  VC_TO_ARM
+}MB0_CHANNEL;
+
+typedef struct {
+  uint32_t width;
+  uint32_t height;
+  uint32_t vWidth;
+  uint32_t vHeight;
+  uint32_t pitch;
+  uint32_t depth;
+  uint32_t xOffset;
+  uint32_t yOffset;
+  uint32_t fb;
+  uint32_t fbSize; 
+} fb_info_t __attribute__((aligned(16)));
+\end{lstlisting}
+
+\paragraph{}
+Cada mailbox cuenta con un conjunto de registros con offsets fijos a la direcci\'on base, los cuales se utilizan en la comunicaci\'on. MB0\_READ, MB0\_WRITE y MB0\_STATUS son las direcciones de los registros de lectura, escritura y estado, respectivamente, del mailbox 0.
+
+\paragraph{}
+MAIL\_FULL, MAIL\_EMPTY, BUFF\_ADDR\_MASK, CHANNEL\_ MASK son m\'ascaras que resultar\'an \'utiles para la interpretaci\'on de mensajes. La raz\'on para usarlas es que la interacci\'on con el mailbox sigue cierto formato en particular.
+
+\paragraph{}
+MB0\_CHANNEL describe los canales con los que cuenta el mailbox0, los cuales son:
+
+\begin{enumerate}
+\item Power management
+\item Framebuffer
+\item Virtual UART
+\item VCHIQ
+\item LEDs
+\item Buttons
+\item Touch screen
+\item -
+\item Property tags (ARM -$>$ VC)
+\item Property tags (VC -$>$ ARM) 
+\end{enumerate}
+
+\paragraph{}
+fb\_info\_t es una estructura que contiene la informaci\'on que se usa en la negociaci\'on con el framebuffer. Los valores son los siguientes:\cite{Mailbox}
+
+\begin{itemize}
+\item uint32\_t width : Ancho pedido del display f\'isico.
+\item uint32\_t height : Alto pedido del display f\'isico.
+\item uint32\_t vWidth : Ancho pedido del framebuffer virtual.
+\item uint32\_t vHeight : Alto pedido del framebuffer virtual.
+\item uint32\_t pitch : N\'umero de bytes en cada fila de la pantalla.
+\item uint32\_t depth : Profundidad de color.
+\item uint32\_t xOffset : Desplazamiento en X pedido al framebuffer virtual.
+\item uint32\_t yOffset : Desplazamiento en Y pedido al framebuffer virtual.
+\item uint32\_t fb : Direcci\'on del buffer alocado por el VideoCore.
+\item uint32\_t fbSize : Tama\~no del framebuffer.
+\end{itemize}
+
+\paragraph{}
+Los valores deben estar alineados a 16 bytes para facilitar la construcci\'on de valores que se transmitan.
+
+\paragraph{}
+Para poder mandar informaci\'on al framebuffer, se debe negociar con el VideoCore para que se aloje uno, y a partir de ese momento se puede enviar los colores de p\'ixeles determinados que se deseen modificar en el buffer. Esto se realiza al principio del programa, mediante las siguientes funciones:
+
+\begin{lstlisting}
+uint32_t readMB0 (MB0_CHANNEL channel)
+{
+  uint32_t response = 0; 
+  while (1) {
+    while (*MB0_STATUS & MAIL_EMPTY) {};
+    response = *MB0_READ;
+    if ((response & CHANNEL_MASK) == channel) {
+      return (response & (~CHANNEL_MASK));
+    }
+  }
+}
+
+void writeMB0 (fb_info_t * data, MB0_CHANNEL channel)
+{
+  uint32_t intData = (uint32_t) data | BUFF_ADDR_MASK | channel;
+  while (*MB0_STATUS & MAIL_FULL) {};
+  *MB0_WRITE = intData;
+}
+\end{lstlisting}
+
+\paragraph{}
+Las funciones readMB0 y writeMB0 se encargan de leer y escribir del mailbox, siguiendo las instrucciones especificadas en la documentaci\'on.\cite{MailboxAccess}
+
+\paragraph{}
+Para leer:
+
+\begin{enumerate}
+\item Leer el registro de estado hasta que la bandera de vac\'io no est\'e activada.
+\item Leer informaci\'on del registro de lectura.
+\item Si los 4 bits m\'as bajos no corresponden al n\'umero de canal esperado, repetir desde el paso 1. (Considerar que la informaci\'on se transmite en formato little-endian)
+\item Los 28 bits m\'as altos son el mensaje devuelto.
+\end{enumerate}
+
+\paragraph{}
+Para escribir:
+
+\begin{enumerate}
+\item Leer el registro de estado hasta que la bandera de lleno no est\'e activada.
+\item Escribir la informaci\'on (desplazada a los 28 bits superiores) combinada con el canal (puesto en los 4 bits inferiores).
+\end{enumerate}
+
+\paragraph{}
+Se define una variable fbInfo, utilizada para negociar con el VideoCore, y una vez que un buffer est\'e disponible, se definir\'a la siguiente variable:
+
+\begin{lstlisting}
+pix = (volatile uint32_t *) (fbInfo.fb & (~BUFF_ADDR_MASK));
+\end{lstlisting}
+
+\paragraph{}
+pix almacena la direcci\'on de memoria del buffer. Luego, para poder modificar el valor de un pixel espec\'ifico, basta con escribir en su direcci\'on espec\'ifica el valor de 32 bits correspondiente al color que se desea que adopte.
+
+\paragraph{}
+Dado que ya no se posee una interfaz UART, o cualquier otro acceso por perif\'ericos, se opta por modificar la entrada del c\'odigo, utilizando la inclusi\'on de un archivo gameoflife.h donde se encuentra un arreglo con las coordenadas de las celdas que inician vivas. Este cambio genera que haya que volver a compilar ante la necesidad de cambiar el estado inicial.
+
+\begin{lstlisting}
+void ingresarTablero(){
+	int i;
+	for(i = 0; i < sizeof(coor)/sizeof(int); i += 2){
+		T[0][coor[i+1]][coor[i]] = 1;
+	}
+}
+\end{lstlisting}
+
+\paragraph{}
+La funci\'on ingresarTablero ahora considera los pares de valores establecidos en el arreglo coor para darle un valor inicial al tablero.
+
+\begin{lstlisting}
+#define RGB32(red, green, blue) (red | (green << 8) | (blue << 16) | 0xFF000000)
+
+void setCasilla(int x, int y, int R, int G, int B){
+	int tamanioCasilla = fbInfo.vWidth/W;
+	int offsetX = (x - 1) * tamanioCasilla;
+	int offsetY = (y - 1) * tamanioCasilla;
+	int i, j;
+	for(i = 0; i < tamanioCasilla; i++)
+		for(j = 0; j < tamanioCasilla; j++)
+			pix[(offsetY + i) * fbInfo.vWidth + (offsetX + j)] = RGB32(R,G,B);
+}
+\end{lstlisting}
+
+\paragraph{}
+Se defini\'o un tablero de tama\~no proporcional a la pantalla, pero m\'as peque\~no. Por lo tanto, a cada casilla le corresponde un conjunto de pixeles que la representa. La funci\'on setCasilla se encarga de tomar las coordenadas de una celda, junto con las componentes RGB del color del que se desea pintarla, y escribe en el framebuffer dicha informaci\'on en los p\'ixeles del bloque. Esta funci\'on es la que se utilizar\'a en aquellas que requieran cambiar el estado de un pixel en pantalla.
+
+\begin{lstlisting}
+void printTablero(int act){
+	int i, j;
+	for(i = 1; i < H+1; ++i){
+		for(j = 1; j < W+1; ++j){
+			if(T[act][i][j])
+				setCasilla(j, i, 255, 255, 255);
+			else
+				setCasilla(j, i, 0, 0, 0);
+			}
+	}
+}
+\end{lstlisting}
+
+\paragraph{}
+La funci\'on printTablero mantiene la misma estructura que en c\'odigos anteriores, salvo las modificaciones pertinentes para utilizar framebuffer al momento de mostrar por pantalla. Sin embargo, resulta muy costoso refrescar toda la pantalla luego de cada evoluci\'on del tablero. En consecuencia, se modific\'o evolTablero para que \'unicamente se actualicen en pantalla los valores de las celdas que modificaron su estado entre un turno y el siguiente.
+
+\begin{lstlisting}
+void evolTablero(int p){
+	int act = p;
+	int sig = (p ^ 1) & 1;
+	
+	int i, j, k;
+	for(i = 1; i < H+1; ++i){
+		for(j = 1; j < W+1; ++j){
+			int around = 0;
+			for(k = 0; k < 8; ++k)
+				around += T[act][ i + HDIR[k] ][ j + WDIR[k] ];
+			
+			if(T[act][i][j] && around <= 3 && around >= 2)
+				T[sig][i][j] = 1;
+			
+			else{
+				if(around == 3)
+					T[sig][i][j] = 1;
+				
+				else
+					T[sig][i][j] = 0;
+			}
+
+			if(T[act][i][j] != T[sig][i][j]){
+				if(T[sig][i][j])
+					setCasilla(j, i, 255, 255, 255);
+				else
+					setCasilla(j, i, 0, 0, 0);
+			}
+		}
+	}
+}
+\end{lstlisting}
+
+\subsection{Compilaci\'on y Ejecuci\'on}
+
+\paragraph{}
+Al usar las mismas opciones de compilaci\'on varias veces, o para hacer el makefile m\'as legible, resulta conveniente agruparlas como se ve en la l\'inea:
+
+\begin{lstlisting}
+COPS = -Wall -O2 -nostdlib -nostartfiles -ffreestanding -mcpu=arm1176jzf-s -std=c99
+\end{lstlisting}
+
+\paragraph{}
+Al usar O2 son necesarias las precauciones previamente explicadas (como no tener una funci\'on main). \cite{DwelchReadme}
+
+\paragraph{}
+Basta entonces con ejecutar:
+
+\begin{commandshell}
+$(ARMGNU)-as vectors.s -o vectors.o
+$(ARMGNU)-gcc $(COPS) -c gameoflife.c -o gameoflife.o -std=c99
+$(ARMGNU)-ld vectors.o gameoflife.o -T memmap -o gameoflife.elf
+$(ARMGNU)-objcopy gameoflife.elf -O binary gameoflife.bin
+$(ARMGNU)-objcopy gameoflife.elf -O binary kernel.img
+\end{commandshell}
+
+\paragraph{}
+Donde vectors.s cumple la misma funci\'on que startup.s en la versi\'on anterior y memmap es nuestro linker script. El proceso de compilaci\'on es similar a la implementaci\'on con UART, lo \'unico que cambia son los archivos involucrados.
+
+\newpage
+
+\nocite{*}
+\bibliography{referencias}
+\bibliographystyle{plain}
+
+\end{document}

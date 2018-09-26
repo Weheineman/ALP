@@ -49,14 +49,7 @@ evalComm (Cond bool com1 com2) state =
 		Left err 	-> Left err
 		Right True  -> evalComm com1 state
 		Right False -> evalComm com2 state
-evalComm rep@(Repeat com bool) state =
-	case evalBoolExp bool state of
-		Left err 	-> Left err
-		Right True  -> Right state
-		Right False ->
-			case evalComm com state of
-				Left err -> Left err
-				Right st -> evalComm rep st
+evalComm rep@(Repeat com bool) state = evalComm (Seq com (Cond bool Skip rep)) state 
 						
 -- Evalua una expresion entera, sin efectos laterales
 -- Completar definicion

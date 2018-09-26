@@ -63,7 +63,7 @@ iTerm =  try (parens lis intexp)
                    return $ Tern b i1 i2
          
 bTerm :: Parser BoolExp
-bTerm =  try ( parens lis boolexp)
+bTerm =  try (parens lis boolexp)
      <|> btrue
      <|> bfalse
      <|> relexp

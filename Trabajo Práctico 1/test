@@ -1,1 +1,1 @@
-true
+if true & 3 < 5 then pepe:=2 else skip end

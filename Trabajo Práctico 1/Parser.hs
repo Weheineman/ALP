@@ -19,14 +19,16 @@ totParser p = do
 
 -- Analizador de Tokens
 lis :: TokenParser u
-lis = makeTokenParser (emptyDef   { commentStart  = "/*"
-                                  , commentEnd    = "*/"
-                                  , commentLine   = "//"
-                                  , opLetter      = char '='
-                                  , reservedOpNames = [":="]
-                                  , reservedNames = ["true","false","skip","if",
-                                                     "then","else","end", "while","do", "repeat", "until"] 
-                                  })
+lis = makeTokenParser
+	(emptyDef   { commentStart  = "/*"
+                , commentEnd    = "*/"
+                , commentLine   = "//"
+                , opLetter      = char '='
+                , reservedOpNames = [":="]
+                , reservedNames = ["true","false","skip","if",
+                                   "then","else","end", "while",
+                                   "do", "repeat", "until"] 
+                })
   
   
   
@@ -135,7 +137,7 @@ comm = do list <- sepBy comm1 $semi lis;
                
 
 ------------------------------------
--- Función de parseo
+-- Funcion de parseo
 ------------------------------------
 parseComm :: SourceName -> String -> Either ParseError Comm
 parseComm = parse (totParser comm)

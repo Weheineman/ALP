@@ -269,11 +269,13 @@ comm ::=\ &\mathbf{skip}\\
 
 \subsection{Sem\'antica Operacional de Comandos}
 
+\vspace{4mm}
+
 \infer[\mbox{WHILE}_1]
 {\langle \mathbf{while\ } b \mathbf{\ do\ } c, \sigma \rangle  \rightsquigarrow  \langle c;\mathbf{while\ } b \mathbf{\ do\ } c, \sigma \rangle }
 {\langle b,\sigma \rangle \Downarrow_{\text{boolexp}} \mathbf{true}}
 
-\vspace{5mm}
+\vspace{4mm}
 
 \infer[\mbox{WHILE}_2]
 {\langle \mathbf{while\ } b \mathbf{\ do\ } c, \sigma \rangle  \rightsquigarrow  \langle \mathbf{skip}, \sigma \rangle}

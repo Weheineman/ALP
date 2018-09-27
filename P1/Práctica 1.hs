@@ -41,12 +41,12 @@ import Control.Applicative hiding (many)
 
 -- ~ Ejercicio 3
 
--- ~ entreParen :: Parser a -> Parser a
--- ~ entreParen p =  do char '('
-                   -- ~ ans <- entreParen p
-                   -- ~ char ')'
-                   -- ~ return ans
-            -- ~ <|> p
+entreParen :: Parser a -> Parser a
+entreParen p =  do char '('
+                   ans <- entreParen p
+                   char ')'
+                   return ans
+            <|> p
         
 
 -- ~ Ejercicio 4
@@ -119,45 +119,102 @@ import Control.Applicative hiding (many)
 -- ~ hasktype = sepBy basetype $ string "->"
 
 -- ~ Ejercicio 7
-data Hasktype = DInt | DChar | Fun Hasktype Hasktype deriving Show
 
-basetype :: Parser Hasktype
-basetype = num <|> cha
-         where num = (string "Int" >> return DInt)
-               cha = (string "Char" >> return DChar)
+-- ~ data Hasktype = DInt | DChar | Fun Hasktype Hasktype deriving Show
+
+-- ~ basetype :: Parser Hasktype
+-- ~ basetype = num <|> cha
+         -- ~ where num = (string "Int" >> return DInt)
+               -- ~ cha = (string "Char" >> return DChar)
                
-hasktype :: Parser Hasktype
-hasktype = do t1 <- basetype
-              type2 t1 <|> empty t1
-            where empty t1 = (string [] >> return t1)
-                  type2 t1 = do string "->"
-                                t2 <- hasktype
-                                return $ Fun t1 t2
+-- ~ hasktype :: Parser Hasktype
+-- ~ hasktype = do t1 <- basetype
+              -- ~ type2 t1 <|> empty t1
+            -- ~ where empty t1 = (string [] >> return t1)
+                  -- ~ type2 t1 = do string "->"
+                                -- ~ t2 <- hasktype
+                                -- ~ return $ Fun t1 t2
 
 -- ~ Ejercicio 8
 expr :: Parser Int
 expr = do t <- term
-          e <- expr'
-          return $ t + e
+          f <- expr'
+          return $ f t
           
-expr' :: Parser Int
+expr' :: Parser (Int -> Int)
 expr' = plus <|> minus <|> empty
-      where plus = do char ' '
+      where plus  = do char '+'
+                       t <- term
+                       f <- expr'
+                       return $ f . (+t)
+            minus = do char '-'
+                       t <- term
+                       f <- expr'
+                       return $ f . (\x -> x-t) 
+            empty = return id
           
--- expr = do x <- term
-          -- y <- expr'
-          -- return x+y
+term :: Parser Int
+term = do n <- factor
+          f <- term'
+          return $ f n
 
--- expr' :: Parser Int
--- expr' = do string []
-           -- return 0
-         -- <|> do char '+'
-                -- x <- term
-                -- y <- expr'
-                -- return x + y
-         -- <|> do char '-'
-                -- x <- term
-                -- y <- expr'
-                -- return -x + y
-        
--- term :: 
+term' :: Parser (Int -> Int)
+term' = mult <|> divi <|> empty
+     where mult  = do char '*'
+                      n <- factor
+                      f <- term'
+                      return $ f . (*n)
+           divi  = do char '/'
+                      n <- factor
+                      f <- term'
+                      return $ f . (\ x -> div x n)
+           empty = return id
+
+factor :: Parser Int
+factor = integer <|> entreParen expr
+
+-- ~ Ejercicio 9
+type ConstantExpression = Int
+data TypeSpecifier = TInt | TChar | TFloat deriving Show
+data DirectDeclarator = Id [Char]
+                      | Arr DirectDeclarator ConstantExpression
+                    deriving Show
+data Declarator = Pointer Declarator | Dir DirectDeclarator deriving Show
+data Declaration = Dec TypeSpecifier Declarator deriving Show
+
+constant_expression :: Parser ConstantExpression
+constant_expression = integer
+
+type_specifier :: Parser TypeSpecifier
+type_specifier = int <|> char <|> fl
+               where int  = (token (string "int") >> return TInt)
+                     char = (token (string "char") >> return TChar)
+                     fl   = (token (string "float") >> return TFloat)
+
+direct_declarator :: Parser DirectDeclarator
+direct_declarator = do id <- token $ many alphanum 
+                       f <- token direct_declarator'
+                       return $ f (Id id)
+
+direct_declarator' :: Parser (DirectDeclarator -> DirectDeclarator)
+direct_declarator' = corch <|> empty
+                   where corch = do char '['
+                                    n <- token constant_expression
+                                    char ']'
+                                    f <- token direct_declarator'
+                                    return $ f . (\ x -> Arr x n)
+                         empty = return id
+
+declarator :: Parser Declarator
+declarator = point <|> direct
+           where point  = do char '*'
+                             d <- token declarator
+                             return $ Pointer d
+                 direct = do d <- token $ entreParen direct_declarator
+                             return $ Dir d
+                            
+declaration :: Parser Declaration
+declaration = do t <- token type_specifier
+                 d <- token declarator
+                 char ';'
+                 return $ Dec t d

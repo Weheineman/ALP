@@ -19,14 +19,14 @@ totParser p = do
 
 -- Analizador de Tokens
 lis :: TokenParser u
-lis = makeTokenParser (emptyDef   { commentStart  = "/*"
-                                  , commentEnd    = "*/"
-                                  , commentLine   = "//"
-                                  , opLetter      = char '='
-                                  , reservedOpNames = [":="]
-                                  , reservedNames = ["true","false","skip","if",
-                                                     "then","else","end", "while","do", "repeat", "until"] 
-                                  })
+lis = makeTokenParser
+	(emptyDef   { commentStart  = "/*"
+                , commentEnd    = "*/"
+                , commentLine   = "//"
+                , opLetter      = char '='
+                , reservedOpNames = [":="]
+                , reservedNames = ["true", "false", "skip", "if", "then", "else", "end", "while", "do", "repeat", "until"] 
+                })
   
   
   

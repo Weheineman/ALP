@@ -23,7 +23,6 @@ initTrace = []
 
 
 -- Busca el valor de una variable en un estado
--- Completar la definicion
 lookfor :: Variable -> State -> Either Error Integer
 lookfor var [] = Left $ UndefVar var
 lookfor var ((v,i):xs)
@@ -31,7 +30,6 @@ lookfor var ((v,i):xs)
     | otherwise = lookfor var xs
 
 -- Cambia el valor de una variable en un estado
--- Completar la definicion
 update :: Variable -> Integer -> State -> State
 update var int []         = [(var, int)]
 update var int ((v,i):xs)

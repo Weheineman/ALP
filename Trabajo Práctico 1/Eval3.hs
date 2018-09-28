@@ -39,20 +39,18 @@ update var int ((v,i):xs)
 -- Evalua un programa en el estado nulo
 eval :: Comm -> (Either Error State, Trace)
 eval p = case evalComm p initState initTrace of
-             (Left err, tr) -> (Left err, reverse tr)
-             (Right st,tr) -> (Right st, reverse tr)       
+             (e, tr) -> (e, reverse tr)      
 
 -- Evalua un comando en un estado dado
--- Completar definicion
 evalComm :: Comm -> State -> Trace -> (Either Error State, Trace)
-evalComm Skip state trace               = (Right state, trace)
+evalComm Skip state trace            = (Right state, trace)
 evalComm (Let var int) state trace   = 
     case (evalIntExp int state) of
         Left err  -> (Left err, trace)
         Right val -> (Right  (update var val state), (Let var $ Const val) : trace)
 evalComm (Seq com1 com2) state trace = 
     case evalComm com1 state trace of
-        (Left err, tr) -> (Left err, trace)
+        (Left err, tr) -> (Left err, tr)
         (Right st, tr) -> evalComm com2 st tr
 evalComm (Cond bool com1 com2) state trace = 
     case evalBoolExp bool state of
@@ -82,8 +80,8 @@ evalIntExp (Tern bool int1 int2) state =
 
 -- Evalua una expresion booleana, sin efectos laterales
 evalBoolExp :: BoolExp -> State -> Either Error Bool
-evalBoolExp BTrue _state 		  = Right True
-evalBoolExp BFalse _state 		  = Right False
+evalBoolExp BTrue _state 		    = Right True
+evalBoolExp BFalse _state 		    = Right False
 evalBoolExp (Eq int1 int2) state    = (==) <$> (evalIntExp int1 state) <*> (evalIntExp int2 state)
 evalBoolExp (Lt int1 int2) state    = (<) <$> (evalIntExp int1 state) <*> (evalIntExp int2 state)
 evalBoolExp (Gt int1 int2) state    = (>) <$> (evalIntExp int1 state) <*> (evalIntExp int2 state)

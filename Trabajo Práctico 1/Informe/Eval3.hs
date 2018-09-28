@@ -4,8 +4,11 @@ import AST
 
 -- Estados
 type State = [(Variable,Integer)]
+
+
+--Trazas
 type Trace = [Comm]
-type StateTrace = (State, Trace)
+
 
 -- Errores
 data Error = DivByZero | UndefVar Variable deriving Show
@@ -20,7 +23,6 @@ initTrace = []
 
 
 -- Busca el valor de una variable en un estado
--- Completar la definicion
 lookfor :: Variable -> State -> Either Error Integer
 lookfor var [] = Left $ UndefVar var
 lookfor var ((v,i):xs)
@@ -28,7 +30,6 @@ lookfor var ((v,i):xs)
     | otherwise = lookfor var xs
 
 -- Cambia el valor de una variable en un estado
--- Completar la definicion
 update :: Variable -> Integer -> State -> State
 update var int []         = [(var, int)]
 update var int ((v,i):xs)
@@ -36,29 +37,27 @@ update var int ((v,i):xs)
     | otherwise = (v,i) : (update var int xs)    
 
 -- Evalua un programa en el estado nulo
-eval :: Comm -> Either Error StateTrace
-eval p = case evalComm p (initState,initTrace) of
-             Left err -> Left err
-             Right (st,tr) -> Right (st, reverse tr)       
+eval :: Comm -> (Either Error State, Trace)
+eval p = case evalComm p initState initTrace of
+             (e, tr) -> (e, reverse tr)      
 
 -- Evalua un comando en un estado dado
--- Completar definicion
-evalComm :: Comm -> StateTrace -> Either Error StateTrace
-evalComm Skip stateTrace               = Right stateTrace
-evalComm (Let var int) (state,trace)   = 
+evalComm :: Comm -> State -> Trace -> (Either Error State, Trace)
+evalComm Skip state trace            = (Right state, trace)
+evalComm (Let var int) state trace   = 
     case (evalIntExp int state) of
-        Left err  -> Left err
-        Right val -> Right  (update var val state, (Let var $ Const val) : trace)
-evalComm (Seq com1 com2) stateTrace = 
-    case evalComm com1 stateTrace of
-        Left err -> Left err
-        Right st -> evalComm com2 st
-evalComm (Cond bool com1 com2) stateTrace@(state,trace) = 
+        Left err  -> (Left err, trace)
+        Right val -> (Right  (update var val state), (Let var $ Const val) : trace)
+evalComm (Seq com1 com2) state trace = 
+    case evalComm com1 state trace of
+        (Left err, tr) -> (Left err, tr)
+        (Right st, tr) -> evalComm com2 st tr
+evalComm (Cond bool com1 com2) state trace = 
     case evalBoolExp bool state of
-        Left err    -> Left err
-        Right True  -> evalComm com1 stateTrace
-        Right False -> evalComm com2 stateTrace
-evalComm rep@(Repeat com bool) stateTrace = evalComm (Seq com (Cond bool Skip rep)) stateTrace 
+        Left err    -> (Left err, trace)
+        Right True  -> evalComm com1 state trace
+        Right False -> evalComm com2 state trace
+evalComm rep@(Repeat com bool) state trace = evalComm (Seq com (Cond bool Skip rep)) state trace 
                         
 -- Evalua una expresion entera, sin efectos laterales
 evalDiv :: Either Error Integer -> Either Error Integer -> Either Error Integer
@@ -81,8 +80,8 @@ evalIntExp (Tern bool int1 int2) state =
 
 -- Evalua una expresion booleana, sin efectos laterales
 evalBoolExp :: BoolExp -> State -> Either Error Bool
-evalBoolExp BTrue _state 		  = Right True
-evalBoolExp BFalse _state 		  = Right False
+evalBoolExp BTrue _state 		    = Right True
+evalBoolExp BFalse _state 		    = Right False
 evalBoolExp (Eq int1 int2) state    = (==) <$> (evalIntExp int1 state) <*> (evalIntExp int2 state)
 evalBoolExp (Lt int1 int2) state    = (<) <$> (evalIntExp int1 state) <*> (evalIntExp int2 state)
 evalBoolExp (Gt int1 int2) state    = (>) <$> (evalIntExp int1 state) <*> (evalIntExp int2 state)

@@ -1,1 +1,3 @@
-if (true | false) then pepe:= 4+3+4+5 else skip end
+pepe:= 3;
+pepo:= 3/0;
+pappo:= 5

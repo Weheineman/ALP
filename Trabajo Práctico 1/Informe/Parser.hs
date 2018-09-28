@@ -25,7 +25,9 @@ lis = makeTokenParser
                 , commentLine   = "//"
                 , opLetter      = char '='
                 , reservedOpNames = [":="]
-                , reservedNames = ["true", "false", "skip", "if", "then", "else", "end", "while", "do", "repeat", "until"] 
+                , reservedNames = ["true","false","skip","if",
+                                   "then","else","end", "while",
+                                   "do", "repeat", "until"] 
                 })
   
   

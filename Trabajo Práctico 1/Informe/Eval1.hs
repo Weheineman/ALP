@@ -10,14 +10,12 @@ initState :: State
 initState = []
 
 -- Busca el valor de una variable en un estado
--- Completar la definicion
 lookfor :: Variable -> State -> Integer
 lookfor var ((v,i):xs)
     | v == var  = i
 	| otherwise = lookfor var xs
 
 -- Cambia el valor de una variable en un estado
--- Completar la definicion
 update :: Variable -> Integer -> State -> State
 update var int [] 		= [(var, int)]
 update var int ((v,i):xs)
@@ -29,7 +27,6 @@ eval :: Comm -> State
 eval p = evalComm p initState
 
 -- Evalua un comando en un estado dado
--- Completar definicion
 evalComm :: Comm -> State -> State
 evalComm Skip state		 	   = state
 evalComm (Let var int) state   = update var (evalIntExp int state) state
@@ -40,7 +37,6 @@ evalComm (Cond bool com1 com2) state
 evalComm rep@(Repeat com bool) state = evalComm (Seq com (Cond bool Skip rep))state 
 
 -- Evalua una expresion entera, sin efectos laterales
--- Completar definicion
 evalIntExp :: IntExp -> State -> Integer
 evalIntExp (Const int) _state = int
 evalIntExp (Var var) state = lookfor var state
@@ -55,7 +51,6 @@ evalIntExp (Tern bool int1 int2) state
 
 
 -- Evalua una expresion entera, sin efectos laterales
--- Completar definicion
 evalBoolExp :: BoolExp -> State -> Bool
 evalBoolExp BTrue _state 		  = True
 evalBoolExp BFalse _state 		  = False

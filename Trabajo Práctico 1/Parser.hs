@@ -20,7 +20,7 @@ totParser p = do
 -- Analizador de Tokens
 lis :: TokenParser u
 lis = makeTokenParser
-	(emptyDef   { commentStart  = "/*"
+    (emptyDef   { commentStart  = "/*"
                 , commentEnd    = "*/"
                 , commentLine   = "//"
                 , opLetter      = char '='
@@ -58,9 +58,11 @@ iTerm =  try (parens lis intexp)
   where const = do i <- integer lis
                    return $ Const i
         var   = do id <- identifier lis
-                   return $ Var id
+                   return $ Var id    
         tern  = do b <- boolexp
+                   reservedOp lis "?"
                    i1 <- intexp
+                   reservedOp lis ":"
                    i2 <- intexp
                    return $ Tern b i1 i2
          

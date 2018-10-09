@@ -24,7 +24,7 @@ lis = makeTokenParser
                 , commentEnd    = "*/"
                 , commentLine   = "//"
                 , opLetter      = char '='
-                , reservedOpNames = [":="]
+                , reservedOpNames = [":=", "-", "~", "?", ":"]
                 , reservedNames = ["true","false","skip","if",
                                    "then","else","end", "while",
                                    "do", "repeat", "until"] 
@@ -35,15 +35,13 @@ lis = makeTokenParser
 ----------------------------------
 --- Operadores
 -----------------------------------
-iOperators = [ [Prefix (reservedOp lis "-" >> return (UMinus))          ]
-             , [Infix  (reservedOp lis "*" >> return (Times))  AssocLeft,
+iOperators = [ [Infix  (reservedOp lis "*" >> return (Times))  AssocLeft,
                 Infix  (reservedOp lis "/" >> return (Div))    AssocLeft]
              , [Infix  (reservedOp lis "+" >> return (Plus))   AssocLeft,
                 Infix  (reservedOp lis "-" >> return (Minus))  AssocLeft]
              ]
              
-bOperators = [ [Prefix (reservedOp lis "~" >> return (Not))          ]
-             , [Infix  (reservedOp lis "&" >> return (And)) AssocLeft,
+bOperators = [ [Infix  (reservedOp lis "&" >> return (And)) AssocLeft,
                 Infix  (reservedOp lis "|" >> return (Or))  AssocLeft]
              ]
 
@@ -54,8 +52,9 @@ iTerm :: Parser IntExp
 iTerm =  try (parens lis intexp)
      <|> const
      <|> var
+     <|> neg
      <|> tern
-  where const = do i <- integer lis
+  where const = do i <- natural lis
                    return $ Const i
         var   = do id <- identifier lis
                    return $ Var id    
@@ -65,15 +64,22 @@ iTerm =  try (parens lis intexp)
                    reservedOp lis ":"
                    i2 <- intexp
                    return $ Tern b i1 i2
-         
+        neg   = do reservedOp lis "-"
+                   i <- iTerm
+                   return $UMinus i
+                   
+
 bTerm :: Parser BoolExp
 bTerm =  try (parens lis boolexp)
      <|> btrue
      <|> bfalse
+     <|> neg
      <|> relexp
   where btrue  = (reserved lis "true"  >> return BTrue)
         bfalse = (reserved lis "false" >> return BFalse)
-        
+        neg    = do reservedOp lis "~"
+                    b <- bTerm
+                    return $Not b 
 ----------------------------------
 --- Parser de expresiones enteras
 ----------------------------------

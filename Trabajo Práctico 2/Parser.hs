@@ -14,10 +14,12 @@ module Parser where
 -- Ejercicio 1
 ----------------------------------------------
 
+  numAux :: Integer -> LamTerm
+  numAux 0 = LVar "z"
+  numAux n = App (LVar "s") $ numAux (n-1)
+
   num :: Integer -> LamTerm
-  num = undefined
-  -- ~ num 0 = Abs "s" $ Abs "z" (LVar "z")
-  -- ~ num n = Abs "s" $ Abs "z" (App (LVar "s"))  (App (App (num $ n-1) $ LVar "s") (LVar "z"))
+  num n = Abs "s" $ Abs "z" (numAux n)
 
 -------------------------------------------------
 -- Parser de Lambda Cálculo (Gramatica Extendida) 

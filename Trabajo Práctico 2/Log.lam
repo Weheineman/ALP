@@ -1,0 +1,29 @@
+-- Combinador de Punto Fijo
+def Y = \f . (\x . f (x x)) (\x . f (x x))
+
+def uno = suc zero
+
+def dos = suc uno
+
+def resta = \n m . m (pred) n
+
+def menorIgual = \n m . (is0 (resta n m))  
+
+def is1 = \n . is0 n
+				 (false)
+				 (is0 (pred n))
+
+def log2Aux = \n . is1 n
+                   (pair zero dos)
+                   (	(	\x . menorIgual (snd x) n
+							(pair (suc (fst x)) (add (snd x) (snd x)))
+							(x)
+						) (log2Aux (pred n))
+                   )
+               
+def log2 = fst log2Aux                   
+
+def m = (	\x . menorIgual (snd x) zero
+							(pair (suc (fst x)) (add (snd x) (snd x)))
+							(x)
+						)

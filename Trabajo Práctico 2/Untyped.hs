@@ -47,44 +47,20 @@ subst (Bound k) t' i
     | otherwise = Bound k
 subst (Free s) t' i    = Free s
 subst (t1 :@: t2) t' i = (subst t1 t' i) :@: (subst t2 t' i)
-subst (Lam t1) t' i     = Lam (subst t1 (shift t' 0 1) (i+1))
+subst (Lam t1) t' i    = Lam (subst t1 (shift t' 0 1) (i+1))
 
--- ~ COMO HACER CON LISTA VACIA????
 freeEval :: NameEnv Term -> Name -> Term
--- ~ freeEval [] name = Free name
 freeEval ((name', t):xs) name
     | name == name' = t
     | otherwise     = freeEval xs name
 
 
-normalForm :: Term -> Bool
-normalForm (Bound k)   = True
-normalForm (Free s)    = False
-normalForm (t1 :@: t2) = neutro t1 && normalForm t2
-normalForm (Lam t1)    = normalForm t1
-
-neutro :: Term -> Bool
-neutro  (Bound k)  = True
-neutro (Free s)    = False
-neutro (t1 :@: t2) = neutro t1 && normalForm t2
-neutro (Lam t1)    = False
-
-na :: Term -> Bool
-na (Bound k)   = False
-na (Free s)    = True
-na (t1 :@: t2) = not (neutro (t1 :@: t2))
-na (Lam t1)    = False
-
 eval :: NameEnv Term -> Term -> Term
 eval env (Bound k)   = Bound k
-eval env (Free s)    = freeEval env s
+eval env (Free s)    = eval env $ freeEval env s
 eval env (Lam t1)    = Lam $ eval env t1
-eval env (t1 :@: t2)  
-    | na t1         = eval env (eval env t1 :@: t2)
-    | neutro t1     = t1 :@: (eval env t2) 
-    | otherwise     = let (Lam t) = t1 in
-                        eval env $ shift (subst t (shift t2 0 1) 0) 0 (-1) 
--- ~ eval env (t1 :@: t2) = 
-	-- ~ case eval env t1 of
-	-- ~ Lam t -> eval env (Lam t :@: t2) 
-	-- ~ |t -> t :@: eval env t2
+eval env (Lam t :@: t2) =  eval env $ shift (subst t (shift t2 0 1) 0) 0 (-1)
+eval env (t1 :@: t2) = 
+	case eval env t1 of
+	Lam t -> eval env (Lam t :@: t2) 
+	t -> t :@: eval env t2

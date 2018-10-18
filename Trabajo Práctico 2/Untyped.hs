@@ -50,17 +50,20 @@ subst (t1 :@: t2) t' i = (subst t1 t' i) :@: (subst t2 t' i)
 subst (Lam t1) t' i    = Lam (subst t1 (shift t' 0 1) (i+1))
 
 freeEval :: NameEnv Term -> Name -> Term
+freeEval [] name    = Free name
 freeEval ((name', t):xs) name
     | name == name' = t
     | otherwise     = freeEval xs name
 
-
 eval :: NameEnv Term -> Term -> Term
 eval env (Bound k)   = Bound k
-eval env (Free s)    = eval env $ freeEval env s
+eval env (Free s)    =
+    case freeEval env s of
+    Free s -> Free s
+    t      -> eval env t
 eval env (Lam t1)    = Lam $ eval env t1
 eval env (Lam t :@: t2) =  eval env $ shift (subst t (shift t2 0 1) 0) 0 (-1)
 eval env (t1 :@: t2) = 
-	case eval env t1 of
-	Lam t -> eval env (Lam t :@: t2) 
-	t -> t :@: eval env t2
+    case eval env t1 of
+    Lam t -> eval env (Lam t :@: t2) 
+    t -> t :@: eval env t2

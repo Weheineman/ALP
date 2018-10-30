@@ -21,6 +21,8 @@ conversion' :: [String] -> LamTerm -> Term
 conversion' b (LVar n)     = maybe (Free (Global n)) Bound (n `elemIndex` b)
 conversion' b (App t u)    = conversion' b t :@: conversion' b u
 conversion' b (Abs n t u)  = Lam t (conversion' (n:b) u)
+conversion' b (LLet x v e)  = Let (conversion' b v) (conversion' (x:b) e)
+
 
 -----------------------
 --- eval
@@ -32,6 +34,7 @@ sub _ _ (Bound j) | otherwise = Bound j
 sub _ _ (Free n)              = Free n
 sub i t (u :@: v)             = sub i t u :@: sub i t v
 sub i t (Lam t' u)            = Lam t' (sub (i+1) t u)
+sub i t (Let t' u)            = Let (sub i t t') (sub (i+1) t u)
 
 -- evaluador de términos
 eval :: NameEnv Value Type -> Term -> Value
@@ -40,11 +43,14 @@ eval e (Free n)              = fst $ fromJust $ lookup n e
 eval _ (Lam t u)             = VLam t u
 eval e (Lam _ u :@: Lam s v) = eval e (sub 0 (Lam s v) u)
 eval e (Lam t u :@: v)       = case eval e v of
-                 VLam t' u' -> eval e (Lam t u :@: Lam t' u')
+                 VLam t' u' -> eval e (Lam t u :@: Lam t' u') 
                  _          -> error "Error de tipo en run-time, verificar type checker"
 eval e (u :@: v)             = case eval e u of
-                 VLam t u' -> eval e (Lam t u' :@: v)
-                 _         -> error "Error de tipo en run-time, verificar type checker"
+                 VLam t u'  -> eval e (Lam t u' :@: v)
+                 _          -> error "Error de tipo en run-time, verificar type checker"
+eval e (Let t u)             = case eval e t of
+                 VLam t' u' -> eval e (sub 0 (Lam t' u') u)
+                 _          -> error "Error de tipo en run-time, verificar type checker"
 
 -----------------------
 --- quoting
@@ -99,4 +105,7 @@ infer' c e (t :@: u) = infer' c e t >>= \tt ->
                          _         -> notfunError tt
 infer' c e (Lam t u) = infer' (t:c) e u >>= \tu ->
                        ret $ Fun t tu
+infer' c e (Let t u) = infer' c e t >>= \t' ->
+                       infer' (t':c) e u
+                       
 ----------------------------------

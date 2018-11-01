@@ -21,21 +21,32 @@ import Data.Char
     '.'     { TDot }
     '('     { TOpen }
     ')'     { TClose }
+    ','     { TComma }
     '->'    { TArrow }
+    '0'     { TZero }
+    TBASE   { TTBase }
+    TUNIT   { TTUnit }
+    TNAT    { TTNat }
     VAR     { TVar $$ }
-    TYPE    { TType }
     DEF     { TDef }
-    'let'   { TLet }
-    'in'    { TIn }
+    AS      { TAs }
+    LET     { TLet }
+    IN      { TIn }
+    UNIT    { TUnit }
+    FST     { TFirst }     
+    SND     { TSecond }
+    SUCC    { TSucc }
+    REC     { TRec }
     
-
+    
+-- ~ Que hace var aca???
 %right VAR
 %left '=' 
 %right '->'
 %right '\\' '.' LET IN
 %left AS 
 %right REC
-%right SUC 
+%right SUCC 
 %right SND FST
 
 
@@ -47,19 +58,37 @@ Defexp  : DEF VAR '=' Exp              { Def $2 $4 }
 
 Exp     :: { LamTerm }
         : '\\' VAR ':' Type '.' Exp    { Abs $2 $4 $6 }
-        | 'let' VAR '=' Exp 'in' Exp   { LLet $2 $4 $6 }
+        | LET VAR '=' Exp IN Exp       { LLet $2 $4 $6 }
+        | Exp AS Type                  { LAs $1 $3 }
+        -- ~ Que onda estos casos?
+        -- ~ (\x:(Unit, B->B) . x) (unit , (\x:B. x))
+        -- ~ fst (\x:(Unit, B->B) . x) (unit , (\x:B. x))
+        -- ~ (\x:Unit. x) fst (unit, (unit, unit))
+        | '(' Exp ',' Exp ')'          { LTup $2 $4 }
+        | FST Exp                      { LFst $2 }
+        | SND Exp                      { LSnd $2 }
+        -- ~ Estos van aca?
+        | SUCC Exp                     { LSucc $2 }
+        -- ~ Esto quizas es re fruta, dice Marga de poner atom en vez de Exp
+        | REC Atom Atom Atom           { LRec $2 $3 $4 }
         | NAbs                         { $1 }
         
 NAbs    :: { LamTerm }
         : NAbs Atom                    { App $1 $2 }
         | Atom                         { $1 }
+        
 
 Atom    :: { LamTerm }
         : VAR                          { LVar $1 }
+        | UNIT                         { LUnit }
+        | '0'                          { LZero }
         | '(' Exp ')'                  { $2 }
 
-Type    : TYPE                         { Base }
-        | Type '->' Type               { Fun $1 $3 }
+Type    : TBASE                        { TypeBase }
+        | TUNIT                        { TypeUnit }
+        | TNAT                         { TypeNat }
+        | Type '->' Type               { TypeFun $1 $3 }
+        | '(' Type ',' Type ')'        { TypeTup $2 $4 }
         | '(' Type ')'                 { $2 }
 
 Defs    : Defexp Defs                  { $1 : $2 }
@@ -95,15 +124,25 @@ happyError :: P a
 happyError = \ s i -> Failed $ "Línea "++(show (i::LineNumber))++": Error de parseo\n"++(s)
 
 data Token = TVar String
-               | TType
+               | TTBase
+               | TTUnit
+               | TTNat
+               | TZero
+               | TSucc
+               | TRec
                | TDef
                | TAbs
+               | TAs
                | TLet
                | TIn
+               | TFirst
+               | TSecond
+               | TUnit
                | TDot
                | TOpen
                | TClose 
                | TColon
+               | TComma
                | TArrow
                | TEquals
                | TEOF
@@ -122,18 +161,29 @@ lexer cont s = case s of
                     ('-':('>':cs)) -> cont TArrow cs
                     ('\\':cs)-> cont TAbs cs
                     ('.':cs) -> cont TDot cs
+                    (',':cs) -> cont TComma cs
                     ('(':cs) -> cont TOpen cs
                     ('-':('>':cs)) -> cont TArrow cs
                     (')':cs) -> cont TClose cs
                     (':':cs) -> cont TColon cs
                     ('=':cs) -> cont TEquals cs
+                    ('0':cs) -> cont TZero cs
                     unknown -> \line -> Failed $ "Línea "++(show line)++": No se puede reconocer "++(show $ take 10 unknown)++ "..."
                     where lexVar cs = case span isAlpha cs of
-                                           ("B", rest)   -> cont TType rest
+                                           ("B", rest)   -> cont TTBase rest
+                                           ("Unit", rest)-> cont TTUnit rest
+                                           ("Nat", rest) -> cont TTNat rest
+                                           -- ~ Con 2 c tiene mas onda
+                                           ("succ", rest)-> cont TSucc rest
+                                           ("R", rest)   -> cont TRec rest
                                            ("def", rest) -> cont TDef  rest
                                            ("let", rest) -> cont TLet  rest
                                            ("in", rest)  -> cont TIn   rest
-                                           (var,rest)   -> cont (TVar var) rest
+                                           ("as", rest)  -> cont TAs   rest
+                                           ("unit", rest)-> cont TUnit rest
+                                           ("fst", rest) -> cont TFirst rest
+                                           ("snd", rest) -> cont TSecond rest
+                                           (var,rest)    -> cont (TVar var) rest
                           consumirBK anidado cl cont s = case s of
                                                               ('-':('-':cs)) -> consumirBK anidado cl cont $ dropWhile ((/=) '\n') cs
                                                               ('{':('-':cs)) -> consumirBK (anidado+1) cl cont cs   

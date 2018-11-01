@@ -21,8 +21,8 @@ pp :: Int -> [String] -> Term -> Doc
 pp ii vs (Bound k)         = text (vs !! (ii - k - 1))
 pp _  _  (Free (Global s)) = text s
 
-pp ii vs (i :@: c)   = sep [parensIf (isLam i) (pp ii vs i), 
-                            nest 1 (parensIf (isLam c || isApp c) (pp ii vs c))]  
+pp ii vs (i :@: c)   = sep [parensIf (isNotAtom i) (pp ii vs i), 
+                            nest 1 (parensIf (isNotAtom c) (pp ii vs c))]
 pp ii vs (Lam t c)   = text "\\" <>
                        text (vs !! ii) <>
                        text ":" <> 
@@ -47,7 +47,14 @@ pp ii vs (Tup t1 t2) = text "(" <>
 pp ii vs (Fst t)     = text "fst " <>
                        pp ii vs t 
 pp ii vs (Snd t)     = text "snd " <>
-                       pp ii vs t 
+                       pp ii vs t
+pp ii vs Zero        = text "0"
+pp ii vs (Succ t)    = text "succ " <>
+                       pp ii vs t
+pp ii vs (Rec t1 t2 t3) = sep [ text "R",
+                                parensIf (isNotAtom t1) $ pp ii vs t1,
+                                parensIf (isNotAtom t2) $ pp ii vs t2,
+                                parensIf (isNotAtom t3) $ pp ii vs t3 ]
 
 isLam :: Term -> Bool                    
 isLam (Lam _ _) = True
@@ -55,12 +62,24 @@ isLam  _      = False
 
 isApp :: Term -> Bool        
 isApp (_ :@: _) = True
-isApp _         = False                                                               
+isApp _         = False
+
+isAtom :: Term -> Bool
+isAtom (Free _) = True
+isAtom (Bound _) = True
+isAtom Unit = True
+isAtom Zero = True
+isAtom (Tup _ _) = True
+isAtom _ = False
+
+isNotAtom :: Term -> Bool
+isNotAtom = not . isAtom
 
 -- pretty-printer de tipos
 printType :: Type -> Doc
 printType TypeBase         = text "B"
 printType TypeUnit         = text "Unit"
+printType TypeNat          = text "Nat"
 printType (TypeFun t1 t2)  = sep [ parensIf (isFun t1) (printType t1), 
                                text "->", 
                                printType t2]
@@ -69,6 +88,7 @@ printType (TypeTup t1 t2)  = text "(" <>
                              text ", " <>
                              printType t2 <>
                              text ")"
+          
 
 isFun :: Type -> Bool
 isFun (TypeFun _ _)        = True
@@ -85,6 +105,9 @@ fv (As u t)          = fv u
 fv (Tup t1 t2)       = fv t1 ++ fv t2
 fv (Fst t)           = fv t
 fv (Snd t)           = fv t
+fv Zero              = []
+fv (Succ t)          = fv t
+fv (Rec t1 t2 t3)    = fv t1 ++ fv t2 ++ fv t3
   
 ---
 printTerm :: Term -> Doc 

@@ -27,6 +27,9 @@ conversion' b LUnit        = Unit
 conversion' b (LTup t1 t2) = Tup (conversion' b t1) $ conversion' b t2
 conversion' b (LFst t)     = Fst $ conversion' b t
 conversion' b (LSnd t)     = Snd $ conversion' b t
+conversion' b LZero        = Zero
+conversion' b (LSucc t)    = Succ $ conversion' b t
+conversion' b (LRec t1 t2 t3) = Rec (conversion' b t1) (conversion' b t2) $ conversion' b t3
 
 
 -----------------------
@@ -45,24 +48,29 @@ sub i t Unit                  = Unit
 sub i t (Tup t1 t2)           = Tup (sub i t t1) $ sub i t t2
 sub i t (Fst t')              = Fst (sub i t t')
 sub i t (Snd t')              = Snd (sub i t t')
+sub i t Zero                  = Zero
+sub i t (Succ t')             = Succ (sub i t t')
+sub i t (Rec t1 t2 t3)        = Rec (sub i t t1) (sub i t t2) $ sub i t t3
+
 
 -- evaluador de términos
 eval :: NameEnv Value Type -> Term -> Value
 eval _ (Bound _)                 = error "variable ligada inesperada en eval"
 eval e (Free n)                  = fst $ fromJust $ lookup n e
 eval _ (Lam t u)                 = VLam t u
-eval e (Lam _ u :@: Lam s v)     = eval e (sub 0 (Lam s v) u)
-eval e (Lam _ u :@: Unit   )     = eval e (sub 0 Unit u)
-eval e (Lam _ u :@: (Tup t1 t2)) = eval e (sub 0 (quote $ eval e (Tup t1 t2)) u)
-eval e (Lam t u :@: v)           = eval e (Lam t u :@: (quote $ eval e v)) 
+-- ~ eval e (Lam _ u :@: Lam s v)     = eval e (sub 0 (Lam s v) u)
+-- ~ eval e (Lam _ u :@: Unit   )     = eval e (sub 0 Unit u)
+-- ~ eval e (Lam _ u :@: (Tup t1 t2)) = eval e (sub 0 (quote $ eval e (Tup t1 t2)) u)
+-- ~ eval e (Lam _ u :@: Zero)        = eval e (sub 0 Zero u)
+-- ~ eval e (Lam _ u :@: (Succ t))    = eval e (sub 0 (quote $ eval e (Succ t)) u)
+-- ~ eval e (Lam t u :@: v)           = eval e (Lam t u :@: (quote $ eval e v)) 
+eval e (Lam t u :@: v)           = eval e (sub 0 (quote $ eval e v) u) 
 eval e (u :@: v)                 = case eval e u of
                 VLam t u'       -> eval e (Lam t u' :@: v)
                 _               -> error "Error de tipo en run-time, verificar type checker"
 eval e (Let t u)                 = eval e (sub 0 (quote $ eval e t) u)
 eval e (As t ty)                 = eval e t
 eval e Unit                      = VUnit
--- ~ Por que importa el orden de evaluacion???
--- ~ Esta bien esto: fst (unit, dfpsjhfpidjsf) ?
 eval e (Tup t1 t2)               = VTup (eval e t1) $ eval e t2
 eval e (Fst t)                   = case eval e t of
                 VTup v1 v2      -> v1
@@ -70,21 +78,30 @@ eval e (Fst t)                   = case eval e t of
 eval e (Snd t)                   = case eval e t of
                 VTup v1 v2      -> v2
                 _               -> error "Error de tipo en run-time, verificar type checker"
+eval e Zero                      = VNum NumZero
+eval e (Succ t)                  = case eval e t of
+                VNum v          -> VNum $ NumSucc v
+                _               -> error "Error de tipo en run-time, verificar type checker"
+eval e (Rec t1 t2 t3)            = case (eval e t3) of
+                VNum NumZero    -> eval e t1                
+                VNum (NumSucc v)-> eval e (t2 :@: (Rec t1 t2 t3') :@: t3')
+                                    where t3' = quote $ VNum v 
+                _               -> error "Error de tipo en run-time, verificar type checker"
 
 -----------------------
 --- quoting
 -----------------------
 
--- ~ Que hace esto aca??
-
 quote :: Value -> Term
 quote (VLam t f)   = Lam t f
 quote VUnit        = Unit
 quote (VTup v1 v2) = Tup (quote v1) $ quote v2
+quote (VNum NumZero) = Zero
+quote (VNum (NumSucc v)) = Succ $ quote (VNum v)
 
 ----------------------
 --- type checker
------------------------
+----------------------
 
 
 -- definiciones auxiliares
@@ -110,6 +127,9 @@ notfunError t1 = err $ render (printType t1) ++ " no puede ser aplicado."
 
 nottupError :: Type -> Either String Type
 nottupError t1 = err $ render (printType t1) ++ " no es una tupla."
+
+notnatError :: Type -> Either String Type
+notnatError t1 = err $ render (printType t1) ++ " no es un natural."
 
 notfoundError :: Name -> Either String Type
 notfoundError n = err $ show n ++ " no está definida."
@@ -149,4 +169,18 @@ infer' c e (Fst t)     = infer' c e t >>= \t' ->
 infer' c e (Snd t)     = infer' c e t >>= \t' ->
                          case t' of TypeTup ty1 ty2 -> ret ty2
                                     _               -> nottupError t'
+infer' c e Zero        = ret TypeNat
+infer' c e (Succ t)    = infer' c e t >>= \t' ->
+                         case t' of TypeNat -> ret t'
+                                    _       -> notnatError t'
+infer' c e (Rec t1 t2 t3) = 
+    infer' c e t1 >>= \t1' ->
+    infer' c e t2 >>= \t2' ->
+    infer' c e t3 >>= \t3' ->
+        case t3' of
+            TypeNat -> if t2' == TypeFun t1' (TypeFun TypeNat t1')
+                       then ret t1'
+                       else matchError (TypeFun t1' $ TypeFun TypeNat t1') t2' 
+            _       -> notnatError t3'
+                                
 ----------------------------------

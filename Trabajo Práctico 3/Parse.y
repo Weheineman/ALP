@@ -39,7 +39,6 @@ import Data.Char
     REC     { TRec }
     
     
--- ~ Que hace var aca???
 %right VAR
 %left '=' 
 %right '->'
@@ -60,17 +59,10 @@ Exp     :: { LamTerm }
         : '\\' VAR ':' Type '.' Exp    { Abs $2 $4 $6 }
         | LET VAR '=' Exp IN Exp       { LLet $2 $4 $6 }
         | Exp AS Type                  { LAs $1 $3 }
-        -- ~ Que onda estos casos?
-        -- ~ (\x:(Unit, B->B) . x) (unit , (\x:B. x))
-        -- ~ fst (\x:(Unit, B->B) . x) (unit , (\x:B. x))
-        -- ~ (\x:Unit. x) fst (unit, (unit, unit))
-        | '(' Exp ',' Exp ')'          { LTup $2 $4 }
         | FST Exp                      { LFst $2 }
         | SND Exp                      { LSnd $2 }
-        -- ~ Estos van aca?
         | SUCC Exp                     { LSucc $2 }
-        -- ~ Esto quizas es re fruta, dice Marga de poner atom en vez de Exp
-        | REC Atom Atom Atom           { LRec $2 $3 $4 }
+        | REC Atom Atom Exp            { LRec $2 $3 $4 }
         | NAbs                         { $1 }
         
 NAbs    :: { LamTerm }
@@ -82,6 +74,7 @@ Atom    :: { LamTerm }
         : VAR                          { LVar $1 }
         | UNIT                         { LUnit }
         | '0'                          { LZero }
+        | '(' Exp ',' Exp ')'          { LTup $2 $4 }
         | '(' Exp ')'                  { $2 }
 
 Type    : TBASE                        { TypeBase }

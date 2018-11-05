@@ -1,1 +1,2 @@
-def add = \x:Nat. \y:Nat . R x (\x:Nat . \y:Nat . succ x) y
+def Iter = \f: Nat -> Nat. \x : Nat. R (f (succ 0)) (\r: Nat. \p: Nat. f r) x 
+def Ack = \m: Nat. R (\n: Nat. succ n) (\r: Nat -> Nat. \p: Nat. \n : Nat. Iter r n) m

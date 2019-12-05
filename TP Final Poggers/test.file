@@ -1,3 +1,5 @@
-FbRecruiter := {estefi, peneabisal, pitohondo, (12)*3+2}
+set<[int, set<bool>]> doot := {woof, sniff, bork, 4 in {} and e subsetEq 3}
 ;
-GanasDeVivir := {}
+
+bool GanasDeVivir := {};
+print(GanasDeVivir)

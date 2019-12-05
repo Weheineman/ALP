@@ -13,19 +13,36 @@ tokens :-
 
   $white+				;
   "--".*				;
-  "print"               { \s -> TokenPrint}
+  "print"               { \s -> TokenPrint }
+  "set"                 { \s -> TokenTSet }
+  "int"                 { \s -> TokenTInt }
+  "bool"                { \s -> TokenTBool }
+  "true"                { \s -> TokenTrue }
+  "false"               { \s -> TokenFalse }
+  "and"                 { \s -> TokenAnd }
+  "or"                  { \s -> TokenOr }
+  "subset"              { \s -> TokenSubset }
+  "subsetEq"            { \s -> TokenSubsetEq }
+  "in"                  { \s -> TokenIn }
   $digit+				{ \s -> TokenInt (read s) }
   ":="				    { \s -> TokenAss }
   \;				    { \s -> TokenSemi }
-  \{                    { \s -> TokenLeftBr}
-  \}                    { \s -> TokenRightBr}
-  \(                    { \s -> TokenLeftParen}
-  \)                    { \s -> TokenRightParen}
-  \,                    { \s -> TokenComma}
+  \[                    { \s -> TokenLBr }
+  \]                    { \s -> TokenRBr }
+  \{                    { \s -> TokenLCurlyBr }
+  \}                    { \s -> TokenRCurlyBr }
+  \(                    { \s -> TokenLParen }
+  \)                    { \s -> TokenRParen }
+  \,                    { \s -> TokenComma }
   \+                    { \s -> TokenPlus }
   \-                    { \s -> TokenMinus }
   \*                    { \s -> TokenTimes }
   \/                    { \s -> TokenDiv }
+  \%                    { \s -> TokenMod }
+  \<                    { \s -> TokenLt }
+  \>                    { \s -> TokenGt }
+  \=                    { \s -> TokenEq }
+  "!="                  { \s -> TokenNEq }
   $alpha [$alpha $digit \_ \']*		{ \s -> TokenId s }
 
 {

@@ -10,30 +10,50 @@ type Id = String
 
 data Stm
     = CompoundStm Stm Stm
-    | AssStm Id Exp
+    | VarAssStm Type Id Exp
     | PrintStm ExpList
     deriving Show
 
 data ExpList
-    = EList Exp ExpList
+    = ExpList Exp ExpList
     | Exp Exp
     deriving Show
 
 data Exp
-    = SetExp SetExp
-    | IntExp IntExp
+    = Int Integer
+    | Bool Bool
+    | Pair Exp Exp
+    | EmptySet
+    | Set ExpList
+    | Var Id
+    | BinOp BinOperator Exp Exp
+    | UnOp UnOperator Exp
     deriving Show
 
-data SetExp
-    = EmptySet
-    | ExpList ExpList
-    | Brack SetExp
+data BinOperator
+    = Add
+    | Sub
+    | Mul
+    | Div
+    | Mod
+    | Lt
+    | Gt
+    | Eq
+    | NEq
+    | And
+    | Or
+    | Subset
+    | SubsetEq
+    | In
     deriving Show
 
-data IntExp
-    =
-    | OperAdd IntExp IntExp
-    | OperSub IntExp IntExp
-    | OperMul IntExp IntExp
-    | OperDiv IntExp IntExp
+data UnOperator
+    = Doot
+    deriving Show
+
+data Type
+    = TInt
+    | TBool
+    | TSet Type
+    | TPair Type Type
     deriving Show

@@ -1,0 +1,29 @@
+set <[int, int]> R := {[1,2], [4,3], [1,1], [2,2], [3,3], [4,4], [2,1], [3,4]};
+
+set <[int, int]> ReflexiveSet := {[a, b] over R | [a, a]} U {[a, b] over R | [b, b]};
+set <[int, int]> SymmetricSet := {[a, b] over R | [b, a]};
+bool IsTransitive := forall [a, b] in R, R [c, d] in R | b != c or [a, d] in R;
+
+bool IsEquivalence := (ReflexiveSet subsetEq R) and
+                      (SymmetricSet subsetEq R) and
+                      IsTransitive;
+
+
+print(IsEquivalence);
+
+
+
+
+
+
+
+funcName(type arg, ...)::returnType := exp;
+BoolExp
+    | true
+    | false
+    | BoolExp or,sand BoolExp
+    | Elem in Set
+    | Set subsetEq Set
+    | Set subset Set
+    | Int <, >, =, != Int
+    | exists

@@ -1,0 +1,5 @@
+#!/bin/bash
+alex MyLexer.x
+happy MyParser.y
+ghc Main.hs
+cat test.file | ./Main

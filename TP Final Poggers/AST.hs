@@ -15,8 +15,8 @@ data Stm
     deriving Show
 
 data ExpList
-    = ExpList Exp ExpList
-    | Exp Exp
+    = SingleExp Exp
+    | ExpList Exp ExpList
     deriving Show
 
 data Exp
@@ -24,10 +24,12 @@ data Exp
     | Bool Bool
     | Pair Exp Exp
     | EmptySet
-    | Set ExpList
+    | SetExt ExpList
+    | SetComp IterList Exp
     | Var Id
     | UnOp UnOperator Exp
     | BinOp BinOperator Exp Exp
+    | Quant Quantifier IterList Exp
     deriving Show
 
 data UnOperator
@@ -42,17 +44,30 @@ data BinOperator
     | Mul
     | Div
     | Mod
+    | Range
     | Lt
     | Gt
     | Eq
     | NEq
     | And
     | Or
+    | Elem
     | Subset
     | SubsetEq
-    | In
+    | Union
+    | Intersect
+    | Diff
     deriving Show
 
+data Quantifier
+    = Exists
+    | ForAll
+    deriving Show
+
+data IterList
+    = SingleIt Id Exp
+    | IterList Id Exp IterList
+    deriving Show
 
 data Type
     = TInt

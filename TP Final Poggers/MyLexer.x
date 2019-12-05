@@ -21,14 +21,22 @@ tokens :-
   "false"               { \s -> TokenFalse }
   "and"                 { \s -> TokenAnd }
   "or"                  { \s -> TokenOr }
+  "in"                  { \s -> TokenIn }
+  "elem"                { \s -> TokenElem }
   "subset"              { \s -> TokenSubset }
   "subsetEq"            { \s -> TokenSubsetEq }
-  "in"                  { \s -> TokenIn }
+  "union"               { \s -> TokenUnion }
+  "intersect"           { \s -> TokenIntersect }
+  "diff"                { \s -> TokenDiff }
   "first"               { \s -> TokenFirst }
   "second"              { \s -> TokenSecond }
+  "exists"              { \s -> TokenExists }
+  "forall"              { \s -> TokenForAll }
   $digit+				{ \s -> TokenInt (read s) }
   ":="				    { \s -> TokenAss }
+  ".."                  { \s -> TokenDots }
   \;				    { \s -> TokenSemi }
+  \|				    { \s -> TokenPipe }
   \[                    { \s -> TokenLBr }
   \]                    { \s -> TokenRBr }
   \{                    { \s -> TokenLCurlyBr }

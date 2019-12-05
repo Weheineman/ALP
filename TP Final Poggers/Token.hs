@@ -11,11 +11,19 @@ data Token =
     TokenOr          |
     TokenSubset      |
     TokenSubsetEq    |
+    TokenUnion       |
+    TokenIntersect   |
+    TokenDiff        |
     TokenIn          |
+    TokenElem        |
     TokenFirst       |
     TokenSecond      |
+    TokenExists      |
+    TokenForAll      |
     TokenAss         |
+    TokenDots        |
     TokenSemi        |
+    TokenPipe        |
     TokenLBr         |
     TokenRBr         |
     TokenLCurlyBr    |

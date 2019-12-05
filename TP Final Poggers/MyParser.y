@@ -18,6 +18,7 @@ import Token
       '*'             { TokenTimes }
       '/'             { TokenDiv }
       '%'             { TokenMod }
+      '..'            { TokenDots }
       '<'             { TokenLt }
       '>'             { TokenGt }
       '='             { TokenEq }
@@ -31,13 +32,20 @@ import Token
       false           { TokenFalse }
       and             { TokenAnd }
       or              { TokenOr }
+      in              { TokenIn }
+      elem            { TokenElem }
       subset          { TokenSubset }
       subsetEq        { TokenSubsetEq }
-      in              { TokenIn }
+      union           { TokenUnion }
+      intersect       { TokenIntersect }
+      diff            { TokenDiff }
       first           { TokenFirst }
       second          { TokenSecond }
+      exists          { TokenExists }
+      forall          { TokenForAll }
       ':='            { TokenAss }
       ';'             { TokenSemi }
+      '|'             { TokenPipe }
       ','             { TokenComma }
       '['             { TokenLBr }
       ']'             { TokenRBr }
@@ -48,12 +56,15 @@ import Token
 
 %right ';'
 %left ':='
+%right '|'
+%left exists forall
 %left and or
-%left subset subsetEq in
 %left '=' '!='
+%left subset subsetEq elem union intersect diff first second '#'
 %left '<' '>'
 %left '+' '-'
 %left '*' '/' '%'
+%left '..'
 %%
 
 Stm
@@ -63,12 +74,24 @@ Stm
 
 ExpList
     : Exp ',' ExpList           { ExpList $1 $3 }
-    | Exp                       { Exp $1 }
+    | Exp                       { SingleExp $1 }
 
 Exp
     : Atom                      { $1 }
     | UnOperation               { $1 }
     | BinOperation              { $1 }
+    | Quantifier                { $1 }
+
+Atom
+    : int                       { Int $1 }
+    | true                      { Bool True }
+    | false                     { Bool False }
+    | id                        { Var $1 }
+    | '[' Exp ',' Exp ']'       { Pair $2 $4 }
+    | '{' '}'                   { EmptySet }
+    | '{' ExpList '}'           { SetExt $2 }
+    | '{' IterList '|' Exp '}'  { SetComp $2 $4 }
+    | '(' Exp ')'               { $2 }
 
 UnOperation
     : first Exp                 { UnOp First $2}
@@ -81,25 +104,27 @@ BinOperation
     | Exp '*' Exp               { BinOp Mul $1 $3 }
     | Exp '/' Exp               { BinOp Div $1 $3 }
     | Exp '%' Exp               { BinOp Mod $1 $3 }
+    | Exp '..' Exp              { BinOp Range $1 $3 }
     | Exp '<' Exp               { BinOp Lt $1 $3 }
     | Exp '>' Exp               { BinOp Gt $1 $3 }
     | Exp '=' Exp               { BinOp Eq $1 $3 }
     | Exp '!=' Exp              { BinOp NEq $1 $3 }
     | Exp and Exp               { BinOp And $1 $3 }
     | Exp or Exp                { BinOp Or $1 $3 }
+    | Exp elem Exp              { BinOp Elem $1 $3 }
     | Exp subset Exp            { BinOp Subset $1 $3 }
     | Exp subsetEq Exp          { BinOp SubsetEq $1 $3 }
-    | Exp in Exp                { BinOp In $1 $3 }
+    | Exp union Exp             { BinOp Union $1 $3 }
+    | Exp intersect Exp         { BinOp Intersect $1 $3 }
+    | Exp diff Exp              { BinOp Diff $1 $3 }
 
-Atom
-    : int                       { Int $1 }
-    | true                      { Bool True }
-    | false                     { Bool False }
-    | id                        { Var $1 }
-    | '[' Exp ',' Exp ']'       { Pair $2 $4 }
-    | '{' '}'                   { EmptySet }
-    | '{' ExpList '}'           { Set $2 }
-    | '(' Exp ')'               { $2 }
+Quantifier
+    : exists IterList '|' Exp   { Quant Exists $2 $4 }
+    | forall IterList '|' Exp   { Quant ForAll $2 $4 }
+
+IterList
+    : id in Exp                 { SingleIt $1 $3}
+    | id in Exp ',' IterList    { IterList $1 $3 $5 }
 
 Type
     : tint                      { TInt }

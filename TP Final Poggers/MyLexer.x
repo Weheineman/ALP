@@ -24,6 +24,8 @@ tokens :-
   "subset"              { \s -> TokenSubset }
   "subsetEq"            { \s -> TokenSubsetEq }
   "in"                  { \s -> TokenIn }
+  "first"               { \s -> TokenFirst }
+  "second"              { \s -> TokenSecond }
   $digit+				{ \s -> TokenInt (read s) }
   ":="				    { \s -> TokenAss }
   \;				    { \s -> TokenSemi }
@@ -42,6 +44,7 @@ tokens :-
   \<                    { \s -> TokenLt }
   \>                    { \s -> TokenGt }
   \=                    { \s -> TokenEq }
+  \#                    { \s -> TokenCard }
   "!="                  { \s -> TokenNEq }
   $alpha [$alpha $digit \_ \']*		{ \s -> TokenId s }
 

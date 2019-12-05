@@ -34,6 +34,8 @@ import Token
       subset          { TokenSubset }
       subsetEq        { TokenSubsetEq }
       in              { TokenIn }
+      first           { TokenFirst }
+      second          { TokenSecond }
       ':='            { TokenAss }
       ';'             { TokenSemi }
       ','             { TokenComma }
@@ -65,7 +67,13 @@ ExpList
 
 Exp
     : Atom                      { $1 }
+    | UnOperation               { $1 }
     | BinOperation              { $1 }
+
+UnOperation
+    : first Exp                 { UnOp First $2}
+    | second Exp                { UnOp Second $2}
+    | '#' Exp                   { UnOp Card $2}
 
 BinOperation
     : Exp '+' Exp               { BinOp Add $1 $3 }

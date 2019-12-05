@@ -12,6 +12,8 @@ data Token =
     TokenSubset      |
     TokenSubsetEq    |
     TokenIn          |
+    TokenFirst       |
+    TokenSecond      |
     TokenAss         |
     TokenSemi        |
     TokenLBr         |

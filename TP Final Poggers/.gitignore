@@ -1,0 +1,5 @@
+*.hi
+*.o
+Main
+MyLexer.hs
+MyParser.hs

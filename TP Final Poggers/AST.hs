@@ -26,8 +26,14 @@ data Exp
     | EmptySet
     | Set ExpList
     | Var Id
-    | BinOp BinOperator Exp Exp
     | UnOp UnOperator Exp
+    | BinOp BinOperator Exp Exp
+    deriving Show
+
+data UnOperator
+    = First
+    | Second
+    | Card
     deriving Show
 
 data BinOperator
@@ -47,9 +53,6 @@ data BinOperator
     | In
     deriving Show
 
-data UnOperator
-    = Doot
-    deriving Show
 
 data Type
     = TInt

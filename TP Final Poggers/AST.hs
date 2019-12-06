@@ -1,12 +1,10 @@
 module AST where
 
 import Token
+import Common
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
-
--- Variable Identifier
-type Id = String
 
 data Stm
     = CompoundStm Stm Stm
@@ -67,11 +65,4 @@ data Quantifier
 data IterList
     = SingleIt Id Exp
     | IterList Id Exp IterList
-    deriving Show
-
-data Type
-    = TInt
-    | TBool
-    | TSet Type
-    | TPair Type Type
     deriving Show

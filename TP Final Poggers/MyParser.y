@@ -3,6 +3,7 @@ module MyParser(parse) where
 
 import MyLexer
 import AST
+import Common
 import Token
 }
 

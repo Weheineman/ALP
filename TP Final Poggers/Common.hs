@@ -89,9 +89,12 @@ data RetValue
 -- Possible errors.
 data Error
     = TypeError Type Type Exp
+    | VarNotFound Id
 
 -- Pretty error printing.
 instance Show Error where
     show (TypeError t1 t2 ex) =
         "TypeError\nExpected Type:" ++ show t1 ++ "\nActual Type:" ++ show t2 ++
         "\nIn the expression:" ++ show ex ++ "\n"
+    show (VarNotFound var) =
+        "Variable Error\nVariable "++var++" used but not declared.\n"

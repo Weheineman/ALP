@@ -3,8 +3,13 @@ module TypeEval where
 import Common
 import State
 
-checkEqualType :: (MonadState m, MonadError m) => Type -> Type -> Exp -> m Type
+checkEqualType :: (MonadState m, MonadError m) => Type -> Type -> Exp -> m a
 checkEqualType t1 t2 ex = if t1 /= t2 then throwType t1 t2 ex
+
+checkVarNotDeclared :: (MonadState m, MonadError m) => Id -> m a
+-- GUIDIOS: Pensar por que esta bien que las funciones
+-- de MonadState devuelvan valores monadicos.
+checkVarNotDeclared var = if hasEntry var
 
 -- typeCheck :: Stm -> Result a
 -- typeCheck p = runState (typeStm p) initState
@@ -38,4 +43,5 @@ typeExp (Pair f s) = do
 typeExp (SetExt el) = do
     tl <- typeExpList el
     return $ TSet tl
-typeExp (SetComp)
+-- GUIDIOS: typeExp de SetComp
+typeExp (Var Id) = do

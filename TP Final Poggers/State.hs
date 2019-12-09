@@ -58,9 +58,11 @@ instance Applicative State where
 -- A MonadError is a Monad that can throw errors.
 class Monad m => MonadError m where
     throwType :: Type -> Type -> Exp -> m a
+    throwVarNF :: Id -> m a
 
 instance MonadError State where
     throwType t1 t2 ex = State(\s -> Error $ TypeError t1 t2 ex)
+    throwType var = State(\s -> Error $ VarNotFound var)
 
 -- A MonadState is a Monad with variable states.
 class Monad m => MonadState m where

@@ -1,6 +1,6 @@
 module Common where
 
-import Token
+import           Token
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
@@ -8,10 +8,10 @@ parseError _ = error "Parse error"
 -- Variable Identifier
 type Id = String
 
--- GUIDIOS: Hace falta Unit?
+-- GUIDIOS: Hace falta TUnit?
 -- Datatypes.
 data Type
-    = Unit
+    = TUnit
     | TInt
     | TBool
     | TSet Type
@@ -94,10 +94,13 @@ data Error
 
 -- Pretty error printing.
 instance Show Error where
-    show (TypeError t1 t2 ex) =
-        "TypeError\nExpected Type:" ++ show t1 ++ "\nActual Type:" ++ show t2 ++
-        "\nIn the expression:" ++ show ex ++ "\n"
-    show (VarNotFound var) =
-        "Variable Error\nVariable "++var++" used but not declared.\n"
-    show (VarExists var) =
-        "Variable Error\nVariable "++var++" already declared.\n"
+  show (TypeError t1 t2 ex) =
+    "\nExpected Type:"
+      ++ show t1
+      ++ "\nActual Type:"
+      ++ show t2
+      ++ "\nIn the expression:"
+      ++ show ex
+      ++ "\n"
+  show (VarNotFound var) = "\nVariable " ++ var ++ " used but not declared.\n"
+  show (VarExists   var) = "\nVariable " ++ var ++ " already declared.\n"

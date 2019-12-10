@@ -1,8 +1,13 @@
-module Eval (eval) where
+module Eval
+  ( eval
+  )
+where
 
 import           AST
-import           Control.Applicative (Applicative (..))
-import           Control.Monad       (ap, liftM)
+import           Control.Applicative            ( Applicative(..) )
+import           Control.Monad                  ( ap
+                                                , liftM
+                                                )
 
 -- Tipos
 data MyType
@@ -25,12 +30,11 @@ newtype StateError a = StateError
 
 instance Monad StateError where
   return x = StateError (\s -> Just (x, s))
-  m >>= f =
-    StateError
-      (\s ->
-         case runStateError m s of
-           Nothing      -> Nothing
-           Just (v, s') -> runStateError (f v) s')
+  m >>= f = StateError
+    (\s -> case runStateError m s of
+      Nothing      -> Nothing
+      Just (v, s') -> runStateError (f v) s'
+    )
 
 -- Clase para representar mónadas con estado de variables
 class Monad m =>
@@ -43,24 +47,21 @@ class Monad m =>
 
 instance MonadState StateError where
   lookfor v = StateError (\s -> Just (lookfor' v s, s))
-    where
-      lookfor' v ((u, j):ss)
-        | v == u = j
-        | v /= u = lookfor' v ss
+   where
+    lookfor' v ((u, j) : ss) | v == u = j
+                             | v /= u = lookfor' v ss
   update v i = StateError (\s -> Just ((), update' v i s))
-    where
-      update' v i [] = [(v, i)]
-      update' v i ((u, _):ss)
-        | v == u = (v, i) : ss
-      update' v i ((u, j):ss)
-        | v /= u = (u, j) : (update' v i ss)
+   where
+    update' v i []                     = [(v, i)]
+    update' v i ((u, _) : ss) | v == u = (v, i) : ss
+    update' v i ((u, j) : ss) | v /= u = (u, j) : (update' v i ss)
 
 -- Para calmar al GHC
 instance Functor StateError where
   fmap = liftM
 
 instance Applicative StateError where
-  pure = return
+  pure  = return
   (<*>) = ap
 
 -- Clase para representar mónadas que lanzan errores
@@ -92,11 +93,11 @@ evalStm (PrintStm expList) = do
 
 evalExpList :: (MonadState m, MonadError m) => ExpList -> m [MyType]
 evalExpList (Exp expr) = do
-    return evalExp expr
+  return evalExp expr
 evalExpList (EList expr expList) = do
-    val <- evalExp expr
-    valList <- evalExpList expList
-    return val:valList
+  val     <- evalExp expr
+  valList <- evalExpList expList
+  return val : valList
 
 evalExp :: (MonadState m, MonadError m) => Exp -> m MyType
 evalExp (SetExp setExp) = evalSetExp setExp
@@ -104,20 +105,20 @@ evalExp (IntExp intExp) = evalIntExp intExp
 
 evalIntExp :: (MonadState m, MonadError m) => IntExp -> m MyType
 evalIntExp (OperAdd intExp term) = do
-    expVal <- evalIntExp intExp
-    termVal <- evalTerm term
-    return expVal + termVal
+  expVal  <- evalIntExp intExp
+  termVal <- evalTerm term
+  return expVal + termVal
 evalIntExp (OperSub intExp term) = do
-    expVal <- evalIntExp intExp
-    termVal <- evalTerm term
-    return expVal - termVal
+  expVal  <- evalIntExp intExp
+  termVal <- evalTerm term
+  return expVal - termVal
 evalIntExp ()
 
 
 -- Evalua una expresion entera, sin efectos laterales
 evalBoolExp :: (MonadState m, MonadError m) => BoolExp -> m Bool
-evalBoolExp BTrue = return True
-evalBoolExp BFalse = return False
+evalBoolExp BTrue       = return True
+evalBoolExp BFalse      = return False
 evalBoolExp (And b1 b2) = do
   m1 <- evalBoolExp b1
   m2 <- evalBoolExp b2

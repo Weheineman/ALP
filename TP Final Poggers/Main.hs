@@ -1,7 +1,12 @@
-module Main (main) where
+module Main
+  ( main
+  )
+where
 
-import MyLexer
-import MyParser
+import           MyLexer
+import           MyParser
+import           TypeEval
 
--- main = getContents >>= print . MyLexer.lexer
-main = getContents >>= print . MyParser.parse . MyLexer.lexer
+main = do
+  file <- getContents
+  print $ (typeCheck . MyParser.parse . MyLexer.lexer) file

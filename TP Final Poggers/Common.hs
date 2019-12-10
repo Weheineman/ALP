@@ -90,6 +90,7 @@ data RetValue
 data Error
     = TypeError Type Type Exp
     | VarNotFound Id
+    | VarExists Id
 
 -- Pretty error printing.
 instance Show Error where
@@ -98,3 +99,5 @@ instance Show Error where
         "\nIn the expression:" ++ show ex ++ "\n"
     show (VarNotFound var) =
         "Variable Error\nVariable "++var++" used but not declared.\n"
+    show (VarExists var) =
+        "Variable Error\nVariable "++var++" already declared.\n"

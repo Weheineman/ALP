@@ -64,12 +64,22 @@ typeSetBinOp expr1 expr2 retType = do
 
 -- Checks the type of an iterator list.
 typeIterList :: (MonadState m, MonadError m) => IterList -> m ()
-typeIterList (SingleIt _ ex) = do
-    TSet _ <- typeExp ex
+typeIterList (SingleIt var ex) = do
+    TSet t <- typeExp ex
+    putValue var (VType t)
     return ()
 typeIterList (IterList var ex iterList) = do
     typeIterList (SingleIt var ex)
     typeIterList iterList
+
+-- Frees all the variables in the IterList
+cleanIterList :: (MonadState m, MonadError m) => IterList -> m ()
+cleanIterList (SingleIt var ex) = do
+    delEntry var
+    return ()
+cleanIterList (IterList var ex iterList) = do
+    cleanIterList (SingleIt var ex)
+    cleanIterList iterList
 
 -- Checks the type of a Quantifier expression.
 typeQuant :: (MonadState m, MonadError m) => IterList -> Exp -> m Type
@@ -77,6 +87,7 @@ typeQuant iterList ex = do
     typeIterList iterList
     t <- typeExp ex
     checkEqualType TBool t ex
+    cleanIterList iterList
     return TBool
 
 -- Checks the type of an expression.
@@ -91,7 +102,11 @@ typeExp EmptySet    = return $ TSet TUnit
 typeExp (SetExt el) = do
   tl <- typeExpList el
   return $ TSet tl
--- GUIDIOS: typeExp de SetComp
+typeExp (SetComp iList ex) = do
+  typeIterList iList
+  t <- typeExp ex
+  cleanIterList iList
+  return $ TSet t
 typeExp (Var var) = do
   VType t <- getValue var
   return t

@@ -23,8 +23,8 @@ typeStm (VarAssStm ty var ex) = do
   checkEqualType ty ty' ex
   putValue var (VType ty)
   return ty
-typeStm (PrintStm el) = do
-  typeExpList el
+typeStm (PrintStm e) = do
+  typeExp e
   return TUnit
 
 -- Checks the type of an Expression List.

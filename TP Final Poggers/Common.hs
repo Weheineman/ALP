@@ -1,6 +1,7 @@
 module Common where
 
 import           Token
+import Data.Set (Set)
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
@@ -21,7 +22,7 @@ data Type
 data Stm
     = CompoundStm Stm Stm
     | VarAssStm Type Id Exp
-    | PrintStm ExpList
+    | PrintStm Exp
     deriving Show
 
 data ExpList
@@ -83,6 +84,8 @@ data IterList
 data RetValue
     = VInt Int
     | VBool Bool
+    | VPair RetValue RetValue
+    | VSet (Set RetValue)
     | VType Type
     deriving (Show, Eq)
 

@@ -70,7 +70,7 @@ import Token
 Stm
     : Type id ':=' Exp          { VarAssStm $1 $2 $4 }
     | Stm ';' Stm               { CompoundStm $1 $3 }
-    | print '(' ExpList ')'     { PrintStm $3 }
+    | print '(' Exp ')'         { PrintStm $3 }
 
 ExpList
     : Exp ',' ExpList           { ExpList $1 $3 }

@@ -1,7 +1,8 @@
 module Common where
 
 import           Token
-import Data.Set (Set)
+import qualified Data.Set as Set
+
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
@@ -85,9 +86,15 @@ data RetValue
     = VInt Int
     | VBool Bool
     | VPair RetValue RetValue
-    | VSet (Set RetValue)
+    | VSet (Set.Set RetValue)
     | VType Type
     deriving (Show, Eq)
+
+-- The return values have to be an instance of Ord in order to belong to a Set.
+instance Ord RetValue where
+  (VInt i1) `compare` (VInt i2) = i1 `compare` i2
+  (VInt _) `compare` retVal = LT
+  
 
 -- Possible errors.
 data Error

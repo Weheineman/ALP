@@ -2,6 +2,8 @@ module Eval where
 
 import           Common
 import           State
+import qualified Data.Set as Set
+
 
 eval :: Stm -> Result Type
 eval p = runState (evalStm p) initEnv
@@ -20,16 +22,16 @@ evalStm (PrintStm el) = do
   l <- evalExp
   return ()
 
--- Generates a VSet containing all the results of evaluating the
+-- Generates a list containing all the results of evaluating the
 -- expressions in the ExpList.
--- GUIDIOS: Ver como hacer esto :)
--- evalExpList :: (MonadState m, MonadError m) => ExpList -> m RetValue
--- evalExpList (SingleExp ex     ) = evalExp ex
--- evalExpList (ExpList ex exList) = do
---   ty  <- evalExp ex
---   ty' <- evalExpList exList
---   checkEqualType ty' ty ex
---   return ty
+evalExpList :: (MonadState m, MonadError m) => ExpList -> m [RetValue]
+evalExpList (SingleExp ex     ) = do
+  val <- evalExp ex
+  return [val]
+evalExpList (ExpList ex exList) = do
+  val     <- evalExp ex
+  valList <- evalExpList exList
+  return (val:valList)
 
 -- Frees all the variables in the IterList
 cleanIterList :: (MonadState m, MonadError m) => IterList -> m ()
@@ -40,7 +42,7 @@ cleanIterList (IterList var ex iterList) = do
     cleanIterList (SingleIt var ex)
     cleanIterList iterList
 
--- Checks the type of an expression.
+-- Evaluates an expression.
 evalExp :: (MonadState m, MonadError m) => Exp -> m RetValue
 evalExp (Int i) = return $ VInt i
 evalExp (Bool b) = return $ VBool b
@@ -48,12 +50,10 @@ evalExp (Pair f s) = do
   vf <- evalExp f
   vs <- evalExp s
   return $ VPair vf vs
--- GUIDIOS: Uso esto pal emptySet?
-evalExp EmptySet    = return $ VType TUnit
--- GUIDIOS: Hace falta meterle el VSet?
--- evalExp (SetExt el) = do
---   set <- evalExpList el
---   return $ VSet set
+evalExp EmptySet    = return $ VSet empty
+evalExp (SetExt el) = do
+  valList <- evalExpList el
+  return $ VSet Set.fromList valList
 -- GUIDIOS: Re hard
 -- evalExp (SetComp iList ex) = do
 --   evalIterList iList
@@ -69,7 +69,6 @@ evalExp (UnOp First ex) = do
 evalExp (UnOp Second ex) = do
   VPair _ val <- evalExp ex
   return val
--- GUIDIOS: Aprender a usar Set :)
 -- evalExp (UnOp Card ex) = do
 --   set <- evalExp ex
 --   return Cardinalidad magica

@@ -10,7 +10,7 @@ parseError _ = error "Parse error"
 -- Variable Identifier
 type Id = String
 
--- GUIDIOS: Hace falta TUnit?
+-- GUIDIOS: Hace falta TUnit? Lo uso para el EmptySet
 -- Datatypes.
 data Type
     = TUnit
@@ -18,7 +18,14 @@ data Type
     | TBool
     | TSet Type
     | TPair Type Type
-    deriving (Show, Eq, Ord)
+    deriving (Eq, Ord)
+
+instance Show Type where
+  show TUnit         = "unit"
+  show TInt          = "int"
+  show TBool         = "bool"
+  show (TSet t     ) = "set <" ++ show t ++ ">"
+  show (TPair t1 t2) = "[" ++ show t1 ++ ", " ++ show t2 ++ "]"
 
 data Stm
     = CompoundStm Stm Stm
@@ -45,7 +52,8 @@ data Exp
     deriving Show
 
 data UnOperator
-    = First
+    = Minus
+    | First
     | Second
     | Card
     deriving Show
@@ -88,7 +96,7 @@ data RetValue
     | VPair RetValue RetValue
     | VSet (Set.Set RetValue)
     | VType Type
-    deriving (Show, Eq)
+    deriving (Eq)
 
 -- The return values have to be an instance of Ord in order to belong to a Set.
 instance Ord RetValue where
@@ -104,6 +112,15 @@ instance Ord RetValue where
   (VPair _ _) `compare` retVal    = LT
   (VSet v1  ) `compare` (VSet v2) = v1 `compare` v2
   (VSet _   ) `compare` retVal    = LT
+
+-- Pretty value printing.
+instance Show RetValue where
+  show (VInt i) = show i
+  show (VBool b) = show b
+  show (VType t) = show t
+  show (VPair v1 v2) = "("++show v1++", "++show v2++")"
+  -- GUIDIOS: Esto esta feo
+  show (VSet s) = show s
 
 -- Possible errors.
 data Error

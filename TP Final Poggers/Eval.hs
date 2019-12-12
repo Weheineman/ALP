@@ -3,6 +3,7 @@ module Eval where
 import           Common
 import           State
 import qualified Data.Set                      as Set
+import           Debug.Trace (traceM)
 
 
 eval :: Stm -> Result ()
@@ -63,6 +64,9 @@ evalExp (SetExt el) = do
 evalExp (Var var) = do
   val <- getValue var
   return val
+evalExp (UnOp Minus ex) = do
+  VInt i <- evalExp ex
+  return $ VInt (-i)
 evalExp (UnOp First ex) = do
   VPair val _ <- evalExp ex
   return val
@@ -71,7 +75,7 @@ evalExp (UnOp Second ex) = do
   return val
 evalExp (UnOp Card ex) = do
   VSet set <- evalExp ex
-  return VInt $ (smallInteger . Set.size) set
+  return $ VInt ((toInteger . Set.size) set)
 evalExp (BinOp Add ex1 ex2) = do
   VInt i1 <- evalExp ex1
   VInt i2 <- evalExp ex2
@@ -95,25 +99,25 @@ evalExp (BinOp Mod ex1 ex2) = do
 evalExp (BinOp Range ex1 ex2) = do
   VInt i1 <- evalExp ex1
   VInt i2 <- evalExp ex2
-  if i1 < i2
+  if i1 >= i2
     then throwRange ex1 i1 ex2 i2
     else return $ VSet ((Set.fromList . map VInt) [i1 .. i2])
 evalExp (BinOp Lt ex1 ex2) = do
   VInt i1 <- evalExp ex1
   VInt i2 <- evalExp ex2
-  return $ VBool (ex1 < ex2)
+  return $ VBool (i1 < i2)
 evalExp (BinOp Gt ex1 ex2) = do
   VInt i1 <- evalExp ex1
   VInt i2 <- evalExp ex2
-  return $ VBool (ex1 > ex2)
+  return $ VBool (i1 > i2)
 evalExp (BinOp Eq ex1 ex2) = do
   v1 <- evalExp ex1
   v2 <- evalExp ex2
-  return $ VBool (ex1 == ex2)
+  return $ VBool (v1 == v2)
 evalExp (BinOp NEq ex1 ex2) = do
   v1 <- evalExp ex1
   v2 <- evalExp ex2
-  return $ VBool (ex1 /= ex2)
+  return $ VBool (v1 /= v2)
 evalExp (BinOp And ex1 ex2) = do
   VBool b1 <- evalExp ex1
   VBool b2 <- evalExp ex2
@@ -125,27 +129,27 @@ evalExp (BinOp Or ex1 ex2) = do
 evalExp (BinOp Elem ex1 ex2) = do
   element  <- evalExp ex1
   VSet set <- evalExp ex2
-  return VBool $ element `Set.member` set
+  return $ VBool (element `Set.member` set)
 evalExp (BinOp Subset ex1 ex2) = do
   VSet set1 <- evalExp ex1
   VSet set2 <- evalExp ex2
-  return VBool $ set1 `Set.isProperSubsetOf` set2
+  return $ VBool (set1 `Set.isProperSubsetOf` set2)
 evalExp (BinOp SubsetEq ex1 ex2) = do
   VSet set1 <- evalExp ex1
   VSet set2 <- evalExp ex2
-  return VBool $ set1 `Set.isSubsetOf` set2
+  return $ VBool (set1 `Set.isSubsetOf` set2)
 evalExp (BinOp Union ex1 ex2) = do
   VSet set1 <- evalExp ex1
   VSet set2 <- evalExp ex2
-  return VSet $ set1 `Set.union` set2
+  return $ VSet (set1 `Set.union` set2)
 evalExp (BinOp Intersect ex1 ex2) = do
   VSet set1 <- evalExp ex1
   VSet set2 <- evalExp ex2
-  return VSet $ set1 `Set.intersection` set2
+  return $ VSet (set1 `Set.intersection` set2)
 evalExp (BinOp Diff ex1 ex2) = do
   VSet set1 <- evalExp ex1
   VSet set2 <- evalExp ex2
-  return VSet $ set1 `Set.difference` set2
+  return $ VSet (set1 `Set.difference` set2)
 -- GUIDIOS: Tmb hard y no quiero pensar ahora.
 -- evalExp (Quant Exists iterList ex) = evalQuant iterList ex
 -- evalExp (Quant ForAll iterList ex) = evalQuant iterList ex

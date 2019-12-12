@@ -61,10 +61,10 @@ import Token
 %left and or
 %left '=' '!='
 %left subset subsetEq elem union intersect diff first second '#'
+%left '..'
 %left '<' '>'
 %left '+' '-'
 %left '*' '/' '%'
-%left '..'
 %%
 
 Stm
@@ -94,9 +94,10 @@ Atom
     | '(' Exp ')'               { $2 }
 
 UnOperation
-    : first Exp                 { UnOp First $2}
-    | second Exp                { UnOp Second $2}
-    | '#' Exp                   { UnOp Card $2}
+    : '-' Exp                   { UnOp Minus $2 }
+    | first Exp                 { UnOp First $2 }
+    | second Exp                { UnOp Second $2 }
+    | '#' Exp                   { UnOp Card $2 }
 
 BinOperation
     : Exp '+' Exp               { BinOp Add $1 $3 }

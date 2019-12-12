@@ -10,5 +10,7 @@ import           Eval
 
 main = do
   file <- getContents
-  print $ (typeCheck . MyParser.parse . MyLexer.lexer) file
-  print $ (eval . MyParser.parse . MyLexer.lexer) file
+  let ast = (MyParser.parse . MyLexer.lexer) file in do
+    print ast
+    print $ typeCheck ast
+    print $ eval ast

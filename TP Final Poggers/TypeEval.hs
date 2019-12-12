@@ -110,6 +110,10 @@ typeExp (SetComp iList ex) = do
 typeExp (Var var) = do
   VType t <- getValue var
   return t
+typeExp (UnOp Minus ex) = do
+  t <- typeExp ex
+  checkEqualType TInt t ex
+  return TInt
 typeExp (UnOp First ex) = do
   TPair t1 _ <- typeExp ex
   return t1

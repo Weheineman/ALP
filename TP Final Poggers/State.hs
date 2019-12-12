@@ -72,15 +72,19 @@ class Monad m => MonadError m where
     throwType :: Type -> Type -> Exp -> m a
     throwVarNF :: Id -> m a
     throwVarEx :: Id -> m a
+    throwDivZero :: Exp -> Exp -> m a
+    throwRange :: Exp -> Integer -> Exp -> Integer -> m a
 
 instance MonadError State where
   throwType t1 t2 ex = State (\s -> Error $ TypeError t1 t2 ex)
   throwVarNF var = State (\s -> Error $ VarNotFound var)
   throwVarEx var = State (\s -> Error $ VarExists var)
+  throwDivZero ex1 ex2 = State (\s -> Error $ DivZero ex1 ex2)
+  throwRange ex1 i1 ex2 i2 = State (\s -> Error $ RangeErr ex1 i1 ex2 i2)
 
 
 -- A MonadState is a Monad with variable states.
-class Monad m => MonadState m where
+class MonadError m => MonadState m where
     -- Checks if the variable is free in the current context.
     -- If it already exists, it throws an error.
     checkFree :: Id -> m ()

@@ -1,7 +1,7 @@
 module Common where
 
 import           Token
-import qualified Data.Set as Set
+import qualified Data.Set                      as Set
 
 
 parseError :: [Token] -> a
@@ -18,7 +18,7 @@ data Type
     | TBool
     | TSet Type
     | TPair Type Type
-    deriving (Show, Eq)
+    deriving (Show, Eq, Ord)
 
 data Stm
     = CompoundStm Stm Stm
@@ -83,7 +83,7 @@ data IterList
 
 -- Possible return values.
 data RetValue
-    = VInt Int
+    = VInt Integer
     | VBool Bool
     | VPair RetValue RetValue
     | VSet (Set.Set RetValue)
@@ -92,15 +92,26 @@ data RetValue
 
 -- The return values have to be an instance of Ord in order to belong to a Set.
 instance Ord RetValue where
-  (VInt i1) `compare` (VInt i2) = i1 `compare` i2
-  (VInt _) `compare` retVal = LT
-  
+  (VInt  i1   ) `compare` (VInt i2)     = i1 `compare` i2
+  (VInt  _    ) `compare` retVal        = LT
+  (VBool b1   ) `compare` (VBool b2)    = b1 `compare` b2
+  (VBool _    ) `compare` retVal        = LT
+  (VType t1   ) `compare` (VType t2)    = t1 `compare` t2
+  (VType _    ) `compare` retVal        = LT
+  (VPair v1 v2) `compare` (VPair v3 v4) = case v1 `compare` v3 of
+    EQ  -> v2 `compare` v4
+    ord -> ord
+  (VPair _ _) `compare` retVal    = LT
+  (VSet v1  ) `compare` (VSet v2) = v1 `compare` v2
+  (VSet _   ) `compare` retVal    = LT
 
 -- Possible errors.
 data Error
     = TypeError Type Type Exp
     | VarNotFound Id
     | VarExists Id
+    | DivZero Exp Exp
+    | RangeErr Exp Integer Exp Integer
 
 -- Pretty error printing.
 instance Show Error where
@@ -114,3 +125,19 @@ instance Show Error where
       ++ "\n"
   show (VarNotFound var) = "\nVariable " ++ var ++ " used but not declared.\n"
   show (VarExists   var) = "\nVariable " ++ var ++ " already declared.\n"
+  show (DivZero ex1 ex2) =
+    "\nDivision by zero in expresssion\n"
+      ++ show ex1
+      ++ "\ndivided by\n"
+      ++ show ex2
+      ++ "\n"
+  show (RangeErr ex1 i1 ex2 i2) =
+    "\nRange error. The first value should be less than the second.\nFirst expression: "
+      ++ show ex1
+      ++ " evaluates to "
+      ++ show i1
+      ++ "\nSecond expression: "
+      ++ show ex2
+      ++ " evaluates to "
+      ++ show i2
+      ++ "\n"

@@ -65,30 +65,30 @@ typeSetBinOp expr1 expr2 retType = do
 -- Checks the type of an iterator list.
 typeIterList :: (MonadState m, MonadError m) => IterList -> m ()
 typeIterList (SingleIt var ex) = do
-    TSet t <- typeExp ex
-    putValue var (VType t)
-    return ()
+  TSet t <- typeExp ex
+  putValue var (VType t)
+  return ()
 typeIterList (IterList var ex iterList) = do
-    typeIterList (SingleIt var ex)
-    typeIterList iterList
+  typeIterList (SingleIt var ex)
+  typeIterList iterList
 
 -- Frees all the variables in the IterList
 cleanIterList :: (MonadState m, MonadError m) => IterList -> m ()
 cleanIterList (SingleIt var ex) = do
-    delEntry var
-    return ()
+  delEntry var
+  return ()
 cleanIterList (IterList var ex iterList) = do
-    cleanIterList (SingleIt var ex)
-    cleanIterList iterList
+  cleanIterList (SingleIt var ex)
+  cleanIterList iterList
 
 -- Checks the type of a Quantifier expression.
 typeQuant :: (MonadState m, MonadError m) => IterList -> Exp -> m Type
 typeQuant iterList ex = do
-    typeIterList iterList
-    t <- typeExp ex
-    checkEqualType TBool t ex
-    cleanIterList iterList
-    return TBool
+  typeIterList iterList
+  t <- typeExp ex
+  checkEqualType TBool t ex
+  cleanIterList iterList
+  return TBool
 
 -- Checks the type of an expression.
 typeExp :: (MonadState m, MonadError m) => Exp -> m Type
@@ -140,10 +140,10 @@ typeExp (BinOp Elem ex1 ex2) = do
   t2 <- typeExp ex2
   checkEqualType (TSet t1) t2 ex2
   return TBool
-typeExp (BinOp Subset    ex1 ex2) = typeSetBinOp ex1 ex2 TBool
-typeExp (BinOp SubsetEq  ex1 ex2) = typeSetBinOp ex1 ex2 TBool
-typeExp (BinOp Union     ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
-typeExp (BinOp Intersect ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
-typeExp (BinOp Diff      ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
-typeExp (Quant Exists iterList ex) = typeQuant iterList ex
-typeExp (Quant ForAll iterList ex) = typeQuant iterList ex
+typeExp (BinOp Subset    ex1      ex2) = typeSetBinOp ex1 ex2 TBool
+typeExp (BinOp SubsetEq  ex1      ex2) = typeSetBinOp ex1 ex2 TBool
+typeExp (BinOp Union     ex1      ex2) = typeSetBinOp ex1 ex2 TUnit
+typeExp (BinOp Intersect ex1      ex2) = typeSetBinOp ex1 ex2 TUnit
+typeExp (BinOp Diff      ex1      ex2) = typeSetBinOp ex1 ex2 TUnit
+typeExp (Quant Exists    iterList ex ) = typeQuant iterList ex
+typeExp (Quant ForAll    iterList ex ) = typeQuant iterList ex

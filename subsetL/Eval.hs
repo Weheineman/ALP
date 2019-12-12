@@ -3,7 +3,8 @@ module Eval where
 import           Common
 import           State
 import qualified Data.Set                      as Set
-import           Debug.Trace (traceM)
+-- GUIDIOS: Sacar debug doot doot
+import           Debug.Trace                    ( traceM )
 
 
 eval :: Stm -> Result ()
@@ -150,6 +151,11 @@ evalExp (BinOp Diff ex1 ex2) = do
   VSet set1 <- evalExp ex1
   VSet set2 <- evalExp ex2
   return $ VSet (set1 `Set.difference` set2)
+evalExp (BinOp CartProduct ex1 ex2) = do
+  VSet set1 <- evalExp ex1
+  VSet set2 <- evalExp ex2
+  let f = (\(x, y) -> VPair x y) in
+    (return . VSet) $ Set.map f (set1 `Set.cartesianProduct` set2)
 -- GUIDIOS: Tmb hard y no quiero pensar ahora.
 -- evalExp (Quant Exists iterList ex) = evalQuant iterList ex
 -- evalExp (Quant ForAll iterList ex) = evalQuant iterList ex

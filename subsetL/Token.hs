@@ -14,6 +14,7 @@ data Token =
     TokenUnion       |
     TokenIntersect   |
     TokenDiff        |
+    TokenCartProduct |
     TokenIn          |
     TokenElem        |
     TokenFirst       |

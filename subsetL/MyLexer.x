@@ -28,6 +28,7 @@ tokens :-
   "union"               { \s -> TokenUnion }
   "intersect"           { \s -> TokenIntersect }
   "diff"                { \s -> TokenDiff }
+  "cartProduct"         { \s -> TokenCartProduct }
   "first"               { \s -> TokenFirst }
   "second"              { \s -> TokenSecond }
   "exists"              { \s -> TokenExists }

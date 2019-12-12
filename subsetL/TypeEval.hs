@@ -144,10 +144,14 @@ typeExp (BinOp Elem ex1 ex2) = do
   t2 <- typeExp ex2
   checkEqualType (TSet t1) t2 ex2
   return TBool
-typeExp (BinOp Subset    ex1      ex2) = typeSetBinOp ex1 ex2 TBool
-typeExp (BinOp SubsetEq  ex1      ex2) = typeSetBinOp ex1 ex2 TBool
-typeExp (BinOp Union     ex1      ex2) = typeSetBinOp ex1 ex2 TUnit
-typeExp (BinOp Intersect ex1      ex2) = typeSetBinOp ex1 ex2 TUnit
-typeExp (BinOp Diff      ex1      ex2) = typeSetBinOp ex1 ex2 TUnit
-typeExp (Quant Exists    iterList ex ) = typeQuant iterList ex
-typeExp (Quant ForAll    iterList ex ) = typeQuant iterList ex
+typeExp (BinOp Subset      ex1 ex2) = typeSetBinOp ex1 ex2 TBool
+typeExp (BinOp SubsetEq    ex1 ex2) = typeSetBinOp ex1 ex2 TBool
+typeExp (BinOp Union       ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
+typeExp (BinOp Intersect   ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
+typeExp (BinOp Diff        ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
+typeExp (BinOp CartProduct ex1 ex2) = do
+  TSet t1 <- typeExp ex1
+  TSet t2 <- typeExp ex2
+  return $ TSet (TPair t1 t2)
+typeExp (Quant Exists iterList ex) = typeQuant iterList ex
+typeExp (Quant ForAll iterList ex) = typeQuant iterList ex

@@ -39,6 +39,7 @@ import Token
       union           { TokenUnion }
       intersect       { TokenIntersect }
       diff            { TokenDiff }
+      cartProduct     { TokenCartProduct }
       first           { TokenFirst }
       second          { TokenSecond }
       exists          { TokenExists }
@@ -60,7 +61,7 @@ import Token
 %left exists forall
 %left and or
 %left '=' '!='
-%left subset subsetEq elem union intersect diff first second '#'
+%left subset subsetEq elem union intersect diff cartProduct first second '#'
 %left '..'
 %left '<' '>'
 %left '+' '-'
@@ -118,6 +119,7 @@ BinOperation
     | Exp union Exp             { BinOp Union $1 $3 }
     | Exp intersect Exp         { BinOp Intersect $1 $3 }
     | Exp diff Exp              { BinOp Diff $1 $3 }
+    | Exp cartProduct Exp       { BinOp CartProduct $1 $3 }
 
 Quantifier
     : exists IterList '|' Exp   { Quant Exists $2 $4 }

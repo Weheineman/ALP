@@ -1,0 +1,3 @@
+set <int> R1 := 1..10;
+set <bool> R2 := {true, true, false};
+set <[int, bool]> R3 := R1 cartProduct R2

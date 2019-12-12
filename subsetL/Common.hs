@@ -77,6 +77,7 @@ data BinOperator
     | Union
     | Intersect
     | Diff
+    | CartProduct
     deriving Show
 
 data Quantifier
@@ -115,12 +116,12 @@ instance Ord RetValue where
 
 -- Pretty value printing.
 instance Show RetValue where
-  show (VInt i) = show i
-  show (VBool b) = show b
-  show (VType t) = show t
-  show (VPair v1 v2) = "("++show v1++", "++show v2++")"
+  show (VInt  i    ) = show i
+  show (VBool b    ) = show b
+  show (VType t    ) = show t
+  show (VPair v1 v2) = "(" ++ show v1 ++ ", " ++ show v2 ++ ")"
   -- GUIDIOS: Esto esta feo
-  show (VSet s) = show s
+  show (VSet s     ) = show s
 
 -- Possible errors.
 data Error

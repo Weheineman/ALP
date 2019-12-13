@@ -35,14 +35,31 @@ evalExpList (ExpList ex exList) = do
   valList <- evalExpList exList
   return (val : valList)
 
--- Frees all the variables in the IterList
-cleanIterList :: (MonadState m, MonadError m) => IterList -> m ()
-cleanIterList (SingleIt var ex) = do
+-- Auxiliary function for iterator evaluation.
+iterateList :: (MonadState m, MonadError m) => Id -> [RetValue] -> Exp -> m [RetValue]
+iterateList var [] _ = return []
+iterateList var (val:xs) ex = do
+  putValue var val
+  expVal <- evalExp ex
   delEntry var
-  return ()
-cleanIterList (IterList var ex iterList) = do
-  cleanIterList (SingleIt var ex)
-  cleanIterList iterList
+  retValList <- iterateList var xs ex
+  return $ expVal : retValList
+
+evalSetComp :: (MonadState m, MonadError m) => IterList -> Exp -> m [RetValue]
+evalSetComp (SingleIt itVar itEx) ex = do
+  VSet itSet <- evalExp itEx
+  iterateList itVar (Set.toList itSet) ex
+evalSetComp (IterList itVar itEx itList) ex = do
+  VSet itSet <- evalExp itEx
+  iterateList itVar (Set.toList itSet) (SetComp itList ex)
+
+evalQuant :: (MonadState m, MonadError m) => Quantifier -> IterList -> Exp -> m [RetValue]
+evalQuant _ (SingleIt itVar itEx) ex = do
+  VSet itSet <- evalExp itEx
+  iterateList itVar (Set.toList itSet) ex
+evalQuant q (IterList itVar itEx itList) ex = do
+  VSet itSet <- evalExp itEx
+  iterateList itVar (Set.toList itSet) (Quant q itList ex)
 
 -- Evaluates an expression.
 evalExp :: (MonadState m, MonadError m) => Exp -> m RetValue
@@ -56,12 +73,9 @@ evalExp EmptySet    = return $ VSet Set.empty
 evalExp (SetExt el) = do
   valList <- evalExpList el
   return $ VSet (Set.fromList valList)
--- GUIDIOS: Re hard
--- evalExp (SetComp iList ex) = do
---   evalIterList iList
---   t <- evalExp ex
---   cleanIterList iList
---   return $ TSet t
+evalExp (SetComp iList ex) = do
+  valList <- evalSetComp iList ex
+  return $ VSet (Set.fromList valList)
 evalExp (Var var) = do
   val <- getValue var
   return val
@@ -156,6 +170,11 @@ evalExp (BinOp CartProduct ex1 ex2) = do
   VSet set2 <- evalExp ex2
   let f = (\(x, y) -> VPair x y) in
     (return . VSet) $ Set.map f (set1 `Set.cartesianProduct` set2)
--- GUIDIOS: Tmb hard y no quiero pensar ahora.
--- evalExp (Quant Exists iterList ex) = evalQuant iterList ex
--- evalExp (Quant ForAll iterList ex) = evalQuant iterList ex
+evalExp (Quant Exists iterList ex) = do
+  retValList <- evalQuant Exists iterList ex
+  let vOr = (\(VBool x) (VBool y) -> VBool $ x || y) in
+    return $ foldl vOr (VBool False) retValList
+evalExp (Quant ForAll iterList ex) = do
+  retValList <- evalQuant Exists iterList ex
+  let vAnd = (\(VBool x) (VBool y) -> VBool $ x && y) in
+    return $ foldl vAnd (VBool True) retValList

@@ -23,8 +23,9 @@ initEnv = []
 
 -- Returns true iff there is an entry for the given variable.
 hasEntry' :: Id -> Env -> Bool
-hasEntry' var []  = False
-hasEntry' var env = and $ map ((== var) . fst) env
+hasEntry' var [] = False
+hasEntry' var ((var', val) : xs) =
+  if var == var' then True else hasEntry' var xs
 
 -- Retrieves the value for the given variable in the environment.
 getValue' :: Id -> Env -> RetValue
@@ -108,8 +109,9 @@ instance MonadState State where
       VType TUnit -> throwVarNF var
       value       -> return value
   putValue var val = do
+    checkFree var
     s <- getEnv
-    if hasEntry' var s then throwVarEx var else putEnv $ putValue' var val s
+    putEnv $ putValue' var val s
   delEntry var = do
     s <- getEnv
     putEnv $ delEntry' var s

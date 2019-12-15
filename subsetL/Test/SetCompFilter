@@ -1,1 +1,2 @@
-set <int> Primes := {n in 2..50 | forall d in 2..(n-1) : n%d != 0 | n }
+set <int> Primes(int max) := {n in 2..max | forall d in 2..(n-1) : n%d != 0 | n };
+set <int> Doot := Primes(1000)

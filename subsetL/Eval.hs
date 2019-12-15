@@ -19,6 +19,9 @@ evalStm (VarAssStm ty var ex) = do
   val <- evalExp ex
   putValue var val
   return ()
+evalStm (FunDeclStm retType funId argType argId ex) = do
+  putValue funId $ VFun argId ex
+  return ()
 evalStm (PrintStm ex) = do
 -- GUIDIOS: Como printeamos aca???
   evalExp ex
@@ -91,6 +94,12 @@ evalExp (SetCompFilter iList filterEx ex) = do
 evalExp (Var var) = do
   val <- getValue var
   return val
+evalExp (RetVal retVal) = return retVal
+evalExp (FunApp funId argEx) = do
+  VFun argId funEx <- getValue funId
+  argVal <- evalExp argEx
+  retVal <- evalExp $ replaceVarInExp funEx argId argVal
+  return retVal
 evalExp (UnOp Minus ex) = do
   VInt i <- evalExp ex
   return $ VInt (-i)

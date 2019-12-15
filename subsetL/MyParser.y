@@ -71,6 +71,7 @@ import Token
 
 Stm
   : Type id ':=' Exp                        { VarAssStm $1 $2 $4 }
+  | Type id '(' Type id ')' ':=' Exp        { FunDeclStm $1 $2 $4 $5 $8 }
   | Stm ';' Stm                             { CompoundStm $1 $3 }
   | print '(' Exp ')'                       { PrintStm $3 }
 
@@ -94,6 +95,7 @@ Atom
   | '{' ExpList '}'                         { SetExt $2 }
   | '{' IterList '|' Exp '}'                { SetComp $2 $4 }
   | '{' IterList '|' Exp '|' Exp '}'        { SetCompFilter $2 $4 $6 }
+  | id '(' Exp ')'                          { FunApp $1 $3 }
   | '(' Exp ')'                             { $2 }
 
 UnOperation

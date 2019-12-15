@@ -23,6 +23,11 @@ typeStm (VarAssStm ty var ex) = do
   checkEqualType ty ty' ex
   putValue var (VType ty)
   return ty
+typeStm (FunDeclStm retType funId argType argId ex) = do
+  ty <- typeExp $ replaceVarInExp ex argId (VType argType)
+  checkEqualType retType ty ex
+  putValue funId (VType $ TFun argType retType)
+  return ty
 typeStm (PrintStm e) = do
   typeExp e
   return TUnit
@@ -110,13 +115,20 @@ typeExp (SetComp iList ex) = do
 typeExp (SetCompFilter iList filterEx ex) = do
   typeIterList iList
   filterT <- typeExp filterEx
-  t <- typeExp ex
+  t       <- typeExp ex
   cleanIterList iList
   checkEqualType TBool filterT filterEx
   return $ TSet t
 typeExp (Var var) = do
   VType t <- getValue var
   return t
+typeExp (RetVal (VType t)) = do
+  return t
+typeExp (FunApp funId ex) = do
+  t                            <- typeExp ex
+  VType (TFun argType retType) <- getValue funId
+  checkEqualType argType t ex
+  return retType
 typeExp (UnOp Minus ex) = do
   t <- typeExp ex
   checkEqualType TInt t ex

@@ -23,6 +23,7 @@ data Token =
     TokenForAll      |
     TokenAss         |
     TokenDots        |
+    TokenColon       |
     TokenSemi        |
     TokenPipe        |
     TokenLBr         |

@@ -33,11 +33,12 @@ tokens :-
   "second"              { \s -> TokenSecond }
   "exists"              { \s -> TokenExists }
   "forall"              { \s -> TokenForAll }
-  $digit+				{ \s -> TokenInt (read s) }
-  ":="				    { \s -> TokenAss }
+  $digit+			        	{ \s -> TokenInt (read s) }
+  ":="				          { \s -> TokenAss }
   ".."                  { \s -> TokenDots }
-  \;				    { \s -> TokenSemi }
-  \|				    { \s -> TokenPipe }
+  \:                    { \s -> TokenColon }
+  \;				            { \s -> TokenSemi }
+  \|				            { \s -> TokenPipe }
   \[                    { \s -> TokenLBr }
   \]                    { \s -> TokenRBr }
   \{                    { \s -> TokenLCurlyBr }

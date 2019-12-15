@@ -107,6 +107,13 @@ typeExp (SetComp iList ex) = do
   t <- typeExp ex
   cleanIterList iList
   return $ TSet t
+typeExp (SetCompFilter iList filterEx ex) = do
+  typeIterList iList
+  filterT <- typeExp filterEx
+  t <- typeExp ex
+  cleanIterList iList
+  checkEqualType TBool filterT filterEx
+  return $ TSet t
 typeExp (Var var) = do
   VType t <- getValue var
   return t

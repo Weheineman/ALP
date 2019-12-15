@@ -53,6 +53,14 @@ evalSetComp (IterList itVar itEx itList) ex = do
   VSet itSet <- evalExp itEx
   iterateList itVar (Set.toList itSet) (SetComp itList ex)
 
+-- Filters the elements of the first list based on the second list, a list
+-- of VBool values.
+evalFilter :: [RetValue] -> [RetValue] -> [RetValue]
+evalFilter [] _ = []
+evalFilter (val:valList) (boolVal:boolList) = case boolVal of
+  VBool True  -> val : (evalFilter valList boolList)
+  VBool False -> evalFilter valList boolList
+
 evalQuant :: (MonadState m, MonadError m) => Quantifier -> IterList -> Exp -> m [RetValue]
 evalQuant _ (SingleIt itVar itEx) ex = do
   VSet itSet <- evalExp itEx
@@ -76,6 +84,10 @@ evalExp (SetExt el) = do
 evalExp (SetComp iList ex) = do
   valList <- evalSetComp iList ex
   return $ VSet (Set.fromList valList)
+evalExp (SetCompFilter iList filterEx ex) = do
+  valList <-  evalSetComp iList ex
+  boolList <- evalSetComp iList filterEx
+  (return . VSet . Set.fromList) $ evalFilter valList boolList
 evalExp (Var var) = do
   val <- getValue var
   return val
@@ -114,9 +126,10 @@ evalExp (BinOp Mod ex1 ex2) = do
 evalExp (BinOp Range ex1 ex2) = do
   VInt i1 <- evalExp ex1
   VInt i2 <- evalExp ex2
-  if i1 >= i2
-    then throwRange ex1 i1 ex2 i2
-    else return $ VSet ((Set.fromList . map VInt) [i1 .. i2])
+  return $ VSet ((Set.fromList . map VInt) [i1 .. i2])
+  -- if i1 > i2
+  --   then throwRange ex1 i1 ex2 i2
+  --   else return $ VSet ((Set.fromList . map VInt) [i1 .. i2])
 evalExp (BinOp Lt ex1 ex2) = do
   VInt i1 <- evalExp ex1
   VInt i2 <- evalExp ex2

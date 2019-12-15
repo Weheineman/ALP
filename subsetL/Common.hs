@@ -45,6 +45,7 @@ data Exp
     | EmptySet
     | SetExt ExpList
     | SetComp IterList Exp
+    | SetCompFilter IterList Exp Exp
     | Var Id
     | UnOp UnOperator Exp
     | BinOp BinOperator Exp Exp
@@ -129,7 +130,7 @@ data Error
     | VarNotFound Id
     | VarExists Id
     | DivZero Exp Exp
-    | RangeErr Exp Integer Exp Integer
+    -- | RangeErr Exp Integer Exp Integer
 
 -- Pretty error printing.
 instance Show Error where
@@ -149,13 +150,13 @@ instance Show Error where
       ++ "\ndivided by\n"
       ++ show ex2
       ++ "\n"
-  show (RangeErr ex1 i1 ex2 i2) =
-    "\nRange error. The first value should be less than the second.\nFirst expression: "
-      ++ show ex1
-      ++ " evaluates to "
-      ++ show i1
-      ++ "\nSecond expression: "
-      ++ show ex2
-      ++ " evaluates to "
-      ++ show i2
-      ++ "\n"
+  -- show (RangeErr ex1 i1 ex2 i2) =
+  --   "\nRange error. The first value should not be greater than the second.\nFirst expression: "
+  --     ++ show ex1
+  --     ++ " evaluates to "
+  --     ++ show i1
+  --     ++ "\nSecond expression: "
+  --     ++ show ex2
+  --     ++ " evaluates to "
+  --     ++ show i2
+  --     ++ "\n"

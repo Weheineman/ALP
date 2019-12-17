@@ -24,6 +24,7 @@ evalStm (FunDeclStm retType funId argType argId ex) = do
   return ()
 evalStm (PrintStm ex) = do
 -- GUIDIOS: Como printeamos aca???
+
   evalExp ex
   return ()
 

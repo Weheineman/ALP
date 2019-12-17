@@ -62,16 +62,23 @@ typeBinOp type1 expr1 type2 expr2 retType = do
 -- If the return type is TUnit, it returns the type of the sets.
 typeSetBinOp :: (MonadState m, MonadError m) => Exp -> Exp -> Type -> m Type
 typeSetBinOp expr1 expr2 retType = do
-  TSet type1 <- typeExp expr1
-  TSet type2 <- typeExp expr2
-  checkEqualType (TSet type1) (TSet type2) expr2
+  -- GUIDIOS: Poner case en vez de pattern matching en do.
+  type1 <- typeExp expr1
+  type2 <- typeExp expr2
+  case type1 of
+    TSet _ -> case type2 of
+                    TSet _ -> checkEqualType type1 type2 expr2
+                    _ -> throwTypeMatch "set <Type>" type2 expr2
+    _ -> throwTypeMatch "set <Type>" type1 expr1
   if retType == TUnit then return $ TSet type1 else return retType
 
 -- Checks the type of an iterator list.
 typeIterList :: (MonadState m, MonadError m) => IterList -> m ()
 typeIterList (SingleIt var ex) = do
-  TSet t <- typeExp ex
-  putValue var (VType t)
+  t <- typeExp ex
+  case t of
+    TSet _ -> putValue var (VType t)
+    _ -> throwTypeMatch "set<Type>" t ex
   return ()
 typeIterList (IterList var ex iterList) = do
   typeIterList (SingleIt var ex)
@@ -120,6 +127,8 @@ typeExp (SetCompFilter iList filterEx ex) = do
   checkEqualType TBool filterT filterEx
   return $ TSet t
 typeExp (Var var) = do
+  -- This pattern matching should never fail because all the values in the
+  -- environment are VTypes
   VType t <- getValue var
   return t
 typeExp (RetVal (VType t)) = do

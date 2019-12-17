@@ -74,14 +74,14 @@ class Monad m => MonadError m where
     throwVarNF :: Id -> m a
     throwVarEx :: Id -> m a
     throwDivZero :: Exp -> Exp -> m a
-    -- throwRange :: Exp -> Integer -> Exp -> Integer -> m a
+    throwTypeMatch :: String -> Type -> Exp -> m a
 
 instance MonadError State where
   throwType t1 t2 ex = State (\s -> Error $ TypeError t1 t2 ex)
   throwVarNF var = State (\s -> Error $ VarNotFound var)
   throwVarEx var = State (\s -> Error $ VarExists var)
   throwDivZero ex1 ex2 = State (\s -> Error $ DivZero ex1 ex2)
-  -- throwRange ex1 i1 ex2 i2 = State (\s -> Error $ RangeErr ex1 i1 ex2 i2)
+  throwTypeMatch typeStr ty ex = State (\s -> Error $ TypeMatchError typeStr ty ex)
 
 
 -- A MonadState is a Monad with variable states.

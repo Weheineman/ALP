@@ -3,14 +3,13 @@ module Common where
 import           Token
 import qualified Data.Set                      as Set
 
-
+-- GUIDIOS: Imagine having error messages.
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
 
 -- Variable Identifier
 type Id = String
 
--- GUIDIOS: Hace falta TUnit? Lo uso para el EmptySet
 -- Datatypes.
 data Type
     = TUnit
@@ -21,6 +20,7 @@ data Type
     | TFun Type Type
     deriving (Eq, Ord)
 
+-- Pretty type printing.
 instance Show Type where
   show TUnit         = "unit"
   show TInt          = "int"
@@ -29,6 +29,7 @@ instance Show Type where
   show (TPair t1 t2) = "[" ++ show t1 ++ ", " ++ show t2 ++ "]"
   show (TFun  t1 t2) = show t1 ++ " -> " ++ show t2
 
+-- Statements.
 data Stm
     = CompoundStm Stm Stm
     | VarAssStm Type Id Exp
@@ -36,11 +37,7 @@ data Stm
     | PrintStm Exp
     deriving Show
 
-data ExpList
-    = SingleExp Exp
-    | ExpList Exp ExpList
-    deriving (Show, Eq, Ord)
-
+-- Expressions.
 data Exp
     = Int Integer
     | Bool Bool
@@ -55,15 +52,53 @@ data Exp
     | UnOp UnOperator Exp
     | BinOp BinOperator Exp Exp
     | Quant Quantifier IterList Exp
-    deriving (Show, Eq, Ord)
+    deriving (Eq, Ord)
 
+-- Pretty expression printing.
+instance Show Exp where
+  show (Int  i    )       = show i
+  show (Bool b    )       = show b
+  show (Pair e1 e2)       = "[" ++ show e1 ++ ", " ++ show e2 ++ "]"
+  show EmptySet           = "{}"
+  show (SetExt eList    ) = "{" ++ show eList ++ "}"
+  show (SetComp iList ex) = "{" ++ show iList ++ " | " ++ show ex ++ "}"
+  show (SetCompFilter iList boolEx ex) =
+    "{" ++ show iList ++ " | " ++ show boolEx ++ " | " ++ show ex ++ "}"
+  show (Var    var        ) = var
+  show (RetVal retVal     ) = show retVal
+  show (FunApp funId ex   ) = funId ++ "(" ++ show ex ++ ")"
+  show (UnOp   op    ex   ) = show op ++ " " ++ show ex
+  show (BinOp op ex1   ex2) = show ex1 ++ " " ++ show op ++ " " ++ show ex2
+  show (Quant q  iList ex ) = show q ++ " " ++ show iList ++ " " ++ show ex
+
+-- Lists.
+data ExpList
+   = SingleExp Exp
+   | ExpList Exp ExpList
+   deriving (Eq, Ord)
+
+-- Pretty Expression List printing.
+instance Show ExpList where
+  show (SingleExp ex     ) = show ex
+  show (ExpList ex exList) = show ex ++ ", " ++ show exList
+
+
+-- Unary operators.
 data UnOperator
     = Minus
     | First
     | Second
     | Card
-    deriving (Show, Eq, Ord)
+    deriving (Eq, Ord)
 
+-- Pretty Unary Operator printing.
+instance Show UnOperator where
+  show Minus  = "-"
+  show First  = "first"
+  show Second = "second"
+  show Card   = "#"
+
+-- Binary Operators.
 data BinOperator
     = Add
     | Sub
@@ -84,17 +119,51 @@ data BinOperator
     | Intersect
     | Diff
     | CartProduct
-    deriving (Show, Eq, Ord)
+    deriving (Eq, Ord)
 
+-- Pretty Binary Operator printing.
+instance Show BinOperator where
+  show Add         = "+"
+  show Sub         = "-"
+  show Mul         = "*"
+  show Div         = "/"
+  show Mod         = "%"
+  show Range       = ".."
+  show Lt          = "<"
+  show Gt          = ">"
+  show Eq          = "="
+  show NEq         = "!="
+  show And         = "and"
+  show Or          = "or"
+  show Elem        = "elem"
+  show Subset      = "subset"
+  show SubsetEq    = "subsetEq"
+  show Union       = "union"
+  show Intersect   = "intersect"
+  show Diff        = "diff"
+  show CartProduct = "cartProduct"
+
+-- Quantifiers.
 data Quantifier
     = Exists
     | ForAll
-    deriving (Show, Eq, Ord)
+    deriving (Eq, Ord)
 
+-- Pretty Quantifier printing.
+instance Show Quantifier where
+  show Exists = "exists"
+  show ForAll = "forall"
+
+-- Iterator Lists.
 data IterList
     = SingleIt Id Exp
     | IterList Id Exp IterList
-    deriving (Show, Eq, Ord)
+    deriving (Eq, Ord)
+
+-- Pretty Iterator List printing.
+instance Show IterList where
+  show (SingleIt var ex      ) = var ++ " in " ++ show ex
+  show (IterList var ex iList) = show (SingleIt var ex) ++ ", " ++ show iList
 
 -- Possible return values.
 data RetValue
@@ -142,10 +211,16 @@ instance Show Error where
       ++ "\ndivided by\n"
       ++ show ex2
       ++ "\n"
-  -- GUIDIOS: Cambiar mensajito.
-  show (TypeMatchError typeStr ty ex) = "\nExpected a type de la pinta "++typeStr++"\nActual Type: "++show ty++"\nIn expression "++show ex
+  show (TypeMatchError typeStr ty ex) =
+    "\nExpected Type matching the following pattern: "
+      ++ typeStr
+      ++ "\nActual Type: "
+      ++ show ty
+      ++ "\nIn expression "
+      ++ show ex
 
-
+-- Replaces all ocurrences of the given variable in the Iterator List by the
+-- given return value.
 replaceVarInItList :: IterList -> Id -> RetValue -> IterList
 replaceVarInItList (SingleIt var' ex) var retVal =
   SingleIt var' $ replaceVarInExp ex var retVal
@@ -154,7 +229,8 @@ replaceVarInItList (IterList var' ex iList) var retVal = IterList
   (replaceVarInExp ex var retVal)
   (replaceVarInItList iList var retVal)
 
-
+-- Replaces all ocurrences of the given variable in the expression list by the
+-- given return value.
 replaceVarInExpList :: ExpList -> Id -> RetValue -> ExpList
 replaceVarInExpList (SingleExp ex) var retVal =
   SingleExp $ replaceVarInExp ex var retVal
@@ -178,7 +254,6 @@ replaceVarInExp (SetCompFilter il boolEx ex) var retVal = SetCompFilter
   (replaceVarInExp ex var retVal)
 replaceVarInExp (Var var') var retVal =
   if var' == var then RetVal retVal else (Var var')
--- GUIDIOS: Funciones como argumento, aca iria algo de la pinta if funId == var then FunApp var
 replaceVarInExp (FunApp funId ex) var retVal =
   FunApp funId $ replaceVarInExp ex var retVal
 replaceVarInExp (UnOp op ex) var retVal =

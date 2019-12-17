@@ -6,15 +6,16 @@ import           State
 -- Checks that the two given types are equal. If they are not,
 -- a TypeError is thrown.
 checkEqualType :: (MonadState m, MonadError m) => Type -> Type -> Exp -> m ()
-checkEqualType (TSet TUnit) (TSet t) ex = return ()
-checkEqualType (TSet t) (TSet TUnit) ex = return ()
+checkEqualType (TSet TUnit) (TSet _) ex = return ()
+checkEqualType (TSet _) (TSet TUnit) ex = return ()
 checkEqualType t1 t2 ex = if t1 /= t2 then throwType t1 t2 ex else return ()
 
-typeCheck :: Stm -> Result Type
+-- Checks if the given program is typed correctly.
+typeCheck :: Stm -> Result ()
 typeCheck p = runState (typeStm p) initEnv
 
--- Checks the type of a statement.
-typeStm :: (MonadState m, MonadError m) => Stm -> m Type
+-- Checks the type of a statement. Statements have no return type.
+typeStm :: (MonadState m, MonadError m) => Stm -> m ()
 typeStm (CompoundStm s1 s2) = do
   typeStm s1
   typeStm s2
@@ -22,15 +23,15 @@ typeStm (VarAssStm ty var ex) = do
   ty' <- typeExp ex
   checkEqualType ty ty' ex
   putValue var (VType ty)
-  return ty
+  return ()
 typeStm (FunDeclStm retType funId argType argId ex) = do
   ty <- typeExp $ replaceVarInExp ex argId (VType argType)
   checkEqualType retType ty ex
   putValue funId (VType $ TFun argType retType)
-  return ty
+  return ()
 typeStm (PrintStm e) = do
   typeExp e
-  return TUnit
+  return ()
 
 -- Checks the type of an Expression List.
 typeExpList :: (MonadState m, MonadError m) => ExpList -> m Type
@@ -62,13 +63,12 @@ typeBinOp type1 expr1 type2 expr2 retType = do
 -- If the return type is TUnit, it returns the type of the sets.
 typeSetBinOp :: (MonadState m, MonadError m) => Exp -> Exp -> Type -> m Type
 typeSetBinOp expr1 expr2 retType = do
-  -- GUIDIOS: Poner case en vez de pattern matching en do.
   type1 <- typeExp expr1
   type2 <- typeExp expr2
   case type1 of
     TSet _ -> case type2 of
-                    TSet _ -> checkEqualType type1 type2 expr2
-                    _ -> throwTypeMatch "set <Type>" type2 expr2
+      TSet _ -> checkEqualType type1 type2 expr2
+      _      -> throwTypeMatch "set <Type>" type2 expr2
     _ -> throwTypeMatch "set <Type>" type1 expr1
   if retType == TUnit then return $ TSet type1 else return retType
 
@@ -78,7 +78,7 @@ typeIterList (SingleIt var ex) = do
   t <- typeExp ex
   case t of
     TSet _ -> putValue var (VType t)
-    _ -> throwTypeMatch "set<Type>" t ex
+    _      -> throwTypeMatch "set<Type>" t ex
   return ()
 typeIterList (IterList var ex iterList) = do
   typeIterList (SingleIt var ex)
@@ -127,30 +127,43 @@ typeExp (SetCompFilter iList filterEx ex) = do
   checkEqualType TBool filterT filterEx
   return $ TSet t
 typeExp (Var var) = do
-  -- This pattern matching should never fail because all the values in the
-  -- environment are VTypes
+  -- This pattern matching should never fail because all
+  -- the values in the environment are VTypes.
   VType t <- getValue var
   return t
 typeExp (RetVal (VType t)) = do
   return t
 typeExp (FunApp funId ex) = do
-  t                            <- typeExp ex
-  VType (TFun argType retType) <- getValue funId
-  checkEqualType argType t ex
-  return retType
+  exType        <- typeExp ex
+  -- This pattern matching should never fail because all
+  -- the values in the environment are VTypes.
+  VType funType <- getValue funId
+  case funType of
+    TFun argType retType -> do
+      checkEqualType argType exType ex
+      return retType
+    _ -> throwTypeMatch ("Type -> Type for identifier " ++ funId)
+                        funType
+                        (FunApp funId ex)
 typeExp (UnOp Minus ex) = do
   t <- typeExp ex
   checkEqualType TInt t ex
   return TInt
 typeExp (UnOp First ex) = do
-  TPair t1 _ <- typeExp ex
-  return t1
+  t <- typeExp ex
+  case t of
+    TPair t1 _ -> return t1
+    _          -> throwTypeMatch "[Type, Type]" t ex
 typeExp (UnOp Second ex) = do
-  TPair _ t2 <- typeExp ex
-  return t2
+  t <- typeExp ex
+  case t of
+    TPair _ t2 -> return t2
+    _          -> throwTypeMatch "[Type, Type]" t ex
 typeExp (UnOp Card ex) = do
-  TSet _ <- typeExp ex
-  return TInt
+  t <- typeExp ex
+  case t of
+    TSet _ -> return TInt
+    _      -> throwTypeMatch "set <Type>" t ex
 typeExp (BinOp Add   ex1 ex2) = typeBinOp TInt ex1 TInt ex2 TInt
 typeExp (BinOp Sub   ex1 ex2) = typeBinOp TInt ex1 TInt ex2 TInt
 typeExp (BinOp Mul   ex1 ex2) = typeBinOp TInt ex1 TInt ex2 TInt
@@ -178,8 +191,12 @@ typeExp (BinOp Union       ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
 typeExp (BinOp Intersect   ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
 typeExp (BinOp Diff        ex1 ex2) = typeSetBinOp ex1 ex2 TUnit
 typeExp (BinOp CartProduct ex1 ex2) = do
-  TSet t1 <- typeExp ex1
-  TSet t2 <- typeExp ex2
-  return $ TSet (TPair t1 t2)
+  type1 <- typeExp ex1
+  type2 <- typeExp ex2
+  case type1 of
+    TSet elemType1 -> case type2 of
+      TSet elemType2 -> (return . TSet) $ TPair elemType1 elemType2
+      _              -> throwTypeMatch "set <Type>" type2 ex2
+    _ -> throwTypeMatch "set <Type>" type1 ex1
 typeExp (Quant Exists iterList ex) = typeQuant iterList ex
 typeExp (Quant ForAll iterList ex) = typeQuant iterList ex

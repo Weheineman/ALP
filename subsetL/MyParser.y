@@ -138,6 +138,7 @@ Type
   | tbool                                   { TBool }
   | set '<' Type '>'                        { TSet $3 }
   | '[' Type ',' Type ']'                   { TPair $2 $4 }
+  | '(' Type ')'                            { $2 }
 {
 
 }

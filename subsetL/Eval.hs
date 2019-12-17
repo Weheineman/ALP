@@ -3,14 +3,15 @@ module Eval where
 import           Common
 import           State
 import qualified Data.Set                      as Set
--- GUIDIOS: Sacar debug doot doot
-import           Debug.Trace                    ( traceM )
 
+-- Pattern matching is used inside do blocks multiple times. They should never
+-- fail, because at this point in the execution the types have already been
+-- checked.
 
 eval :: Stm -> Result ()
 eval p = runState (evalStm p) initEnv
 
--- Evaluates a statement.
+-- Evaluates a statement. Statements do not return values.
 evalStm :: (MonadState m, MonadError m) => Stm -> m ()
 evalStm (CompoundStm s1 s2) = do
   evalStm s1
@@ -23,8 +24,7 @@ evalStm (FunDeclStm retType funId argType argId ex) = do
   putValue funId $ VFun argId ex
   return ()
 evalStm (PrintStm ex) = do
--- GUIDIOS: Como printeamos aca???
-
+-- GUIDIOS: Como printeamos aca??? State deberia ser algo de IO.
   evalExp ex
   return ()
 
@@ -40,6 +40,9 @@ evalExpList (ExpList ex exList) = do
   return (val : valList)
 
 -- Auxiliary function for iterator evaluation.
+-- Given a variable identifier,a list of possible values it can take and an
+-- expression, it returns a list with the return values of the expression for
+-- each possible value of the variable.
 iterateList :: (MonadState m, MonadError m) => Id -> [RetValue] -> Exp -> m [RetValue]
 iterateList var [] _ = return []
 iterateList var (val:xs) ex = do
@@ -49,6 +52,10 @@ iterateList var (val:xs) ex = do
   retValList <- iterateList var xs ex
   return $ expVal : retValList
 
+
+-- Auxiliary function for set comprehension evaluation.
+-- Given an Iterator List and an expression, returns a list with all possible
+-- values of the expression (combining all possible values of the iterators).
 evalSetComp :: (MonadState m, MonadError m) => IterList -> Exp -> m [RetValue]
 evalSetComp (SingleIt itVar itEx) ex = do
   VSet itSet <- evalExp itEx
@@ -65,6 +72,9 @@ evalFilter (val:valList) (boolVal:boolList) = case boolVal of
   VBool True  -> val : (evalFilter valList boolList)
   VBool False -> evalFilter valList boolList
 
+-- Auxiliary function for Quantifier expression evaluation.
+-- Given a Quantifier, an Interator List and an Expression, returns all possible
+-- values of the expression (combining all possible values of the iterators).
 evalQuant :: (MonadState m, MonadError m) => Quantifier -> IterList -> Exp -> m [RetValue]
 evalQuant _ (SingleIt itVar itEx) ex = do
   VSet itSet <- evalExp itEx

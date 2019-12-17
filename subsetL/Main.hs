@@ -13,4 +13,8 @@ main = do
   let ast = (MyParser.parse . MyLexer.lexer) file in do
     print ast
     print $ typeCheck ast
-    print $ eval ast
+    case typeCheck ast of
+      Error e -> print $ Error e
+      doot -> do
+        print doot
+        print $ eval ast

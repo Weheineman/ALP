@@ -1,8 +1,6 @@
 module State where
 
 import           Common
--- GUIDIOS: Sacar Debug
-import           Debug.Trace                    ( traceM )
 import           Control.Applicative            ( Applicative(..) )
 import           Control.Monad                  ( ap
                                                 , liftM
@@ -81,7 +79,8 @@ instance MonadError State where
   throwVarNF var = State (\s -> Error $ VarNotFound var)
   throwVarEx var = State (\s -> Error $ VarExists var)
   throwDivZero ex1 ex2 = State (\s -> Error $ DivZero ex1 ex2)
-  throwTypeMatch typeStr ty ex = State (\s -> Error $ TypeMatchError typeStr ty ex)
+  throwTypeMatch typeStr ty ex =
+    State (\s -> Error $ TypeMatchError typeStr ty ex)
 
 
 -- A MonadState is a Monad with variable states.
